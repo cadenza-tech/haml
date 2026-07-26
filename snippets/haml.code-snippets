@@ -1,0 +1,152 @@
+{
+  "if": {
+    "prefix": "if",
+    "body": ["- if ${1:condition}", "  $2"],
+    "description": "Haml silent script: if"
+  },
+  "if/else": {
+    "prefix": "ifelse",
+    "body": ["- if ${1:condition}", "  $2", "- else", "  $3"],
+    "description": "Haml silent script: if/else"
+  },
+  "elsif": {
+    "prefix": "elsif",
+    "body": ["- elsif ${1:condition}", "  $2"],
+    "description": "Haml silent script: elsif"
+  },
+  "else": {
+    "prefix": "else",
+    "body": ["- else", "  $1"],
+    "description": "Haml silent script: else"
+  },
+  "unless": {
+    "prefix": "unless",
+    "body": ["- unless ${1:condition}", "  $2"],
+    "description": "Haml silent script: unless"
+  },
+  "each": {
+    "prefix": "each",
+    "body": ["- ${1:collection}.each do |${2:item}|", "  $3"],
+    "description": "Haml silent script: each block"
+  },
+  "each_with_index": {
+    "prefix": "eachwi",
+    "body": ["- ${1:collection}.each_with_index do |${2:item}, ${3:index}|", "  $4"],
+    "description": "Haml silent script: each_with_index block"
+  },
+  "case": {
+    "prefix": "case",
+    "body": ["- case ${1:subject}", "- when ${2:value}", "  $3", "- else", "  $4"],
+    "description": "Haml silent script: case/when/else"
+  },
+  "when": {
+    "prefix": "when",
+    "body": ["- when ${1:value}", "  $2"],
+    "description": "Haml silent script: when"
+  },
+  "while": {
+    "prefix": "while",
+    "body": ["- while ${1:condition}", "  $2"],
+    "description": "Haml silent script: while"
+  },
+  "until": {
+    "prefix": "until",
+    "body": ["- until ${1:condition}", "  $2"],
+    "description": "Haml silent script: until"
+  },
+  "begin/rescue": {
+    "prefix": "begin",
+    "body": ["- begin", "  $1", "- rescue ${2:StandardError} => ${3:e}", "  $4"],
+    "description": "Haml silent script: begin/rescue"
+  },
+  "do block": {
+    "prefix": "do",
+    "body": ["- ${1:expression} do |${2:arg}|", "  $3"],
+    "description": "Haml silent script: do block"
+  },
+  "yield": {
+    "prefix": "yield",
+    "body": ["= yield ${1::section}"],
+    "description": "Haml output script: yield"
+  },
+  "content_for": {
+    "prefix": "content_for",
+    "body": ["- content_for ${1::section} do", "  $2"],
+    "description": "Haml silent script: content_for block"
+  },
+  "doctype": {
+    "prefix": "doctype",
+    "body": ["!!! ${1|5,XML,Strict,Frameset,1.1,Basic,Mobile,RDFa|}"],
+    "description": "Haml doctype declaration"
+  },
+  "silent comment": {
+    "prefix": "comment",
+    "body": ["-# $1"],
+    "description": "Haml silent comment (not rendered)"
+  },
+  "html comment": {
+    "prefix": "htmlcomment",
+    "body": ["/ $1"],
+    "description": "Haml HTML comment (rendered)"
+  },
+  "conditional comment": {
+    "prefix": "ifcomment",
+    "body": ["/[if ${1:IE}]", "  $2"],
+    "description": "Haml conditional HTML comment"
+  },
+  "haml-lint disable": {
+    "prefix": "hamllintdisable",
+    "body": ["-# haml-lint:disable ${1:LinterName}", "$2", "-# haml-lint:enable ${1:LinterName}"],
+    "description": "Disable a haml-lint linter for a block"
+  },
+  "filter: ruby": {
+    "prefix": "ruby",
+    "body": [":ruby", "  $1"],
+    "description": "Haml :ruby filter"
+  },
+  "filter: javascript": {
+    "prefix": "javascript",
+    "body": [":javascript", "  $1"],
+    "description": "Haml :javascript filter"
+  },
+  "filter: css": {
+    "prefix": "css",
+    "body": [":css", "  $1"],
+    "description": "Haml :css filter"
+  },
+  "filter: sass": {
+    "prefix": "sass",
+    "body": [":sass", "  $1"],
+    "description": "Haml :sass filter"
+  },
+  "filter: scss": {
+    "prefix": "scss",
+    "body": [":scss", "  $1"],
+    "description": "Haml :scss filter"
+  },
+  "filter: markdown": {
+    "prefix": "markdown",
+    "body": [":markdown", "  $1"],
+    "description": "Haml :markdown filter"
+  },
+  "filter: plain": {
+    "prefix": "plain",
+    "body": [":plain", "  $1"],
+    "description": "Haml :plain filter"
+  },
+  "filter: preserve": {
+    "prefix": "preserve",
+    "body": [":preserve", "  $1"],
+    "description": "Haml :preserve filter"
+  },
+  "filter: escaped": {
+    "prefix": "escaped",
+    "body": [":escaped", "  $1"],
+    "description": "Haml :escaped filter"
+  },
+  "filter: cdata": {
+    "prefix": "cdata",
+    "body": [":cdata", "  $1"],
+    "description": "Haml :cdata filter"
+  }
+}

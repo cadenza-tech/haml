@@ -1,0 +1,5 @@
+# Deliberately stricter than the default so a test can prove this file was actually discovered:
+# haml-lint only searches upward from the process cwd, never from the file path.
+linters:
+  LineLength:
+    max: 40

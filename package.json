@@ -1,0 +1,361 @@
+{
+  "name": "haml",
+  "displayName": "Haml",
+  "description": "Haml language support with syntax highlighting, linting, and formatting powered by haml-lint",
+  "version": "0.0.0",
+  "publisher": "cadenza-tech",
+  "license": "MIT",
+  "icon": "images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cadenza-tech/haml"
+  },
+  "engines": {
+    "vscode": "^1.57.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Formatters",
+    "Snippets"
+  ],
+  "keywords": [
+    "haml",
+    "haml-lint",
+    "ruby",
+    "rails",
+    "linter",
+    "formatter",
+    "syntax",
+    "highlighting"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Syntax highlighting, snippets, indentation, data attribute completion, and partial navigation and completion work in untrusted workspaces: they read file names at most and never start a process. haml-lint diagnostics and formatting are disabled because they execute the haml-lint executable and evaluate .haml-lint.yml (which supports ERB), Gemfile, and .rubocop.yml from the workspace.",
+      "restrictedConfigurations": [
+        "haml.hamlLint.executablePath",
+        "haml.hamlLint.useBundler",
+        "haml.hamlLint.configPath",
+        "haml.formatter"
+      ]
+    },
+    "virtualWorkspaces": {
+      "supported": "limited",
+      "description": "haml-lint requires a local filesystem and a Ruby process, so only syntax highlighting, the built-in Haml snippets and data attribute completion are available in virtual workspaces. Rails snippets need haml.snippets.rails set to \"on\", because their automatic detection reads the workspace from disk. Partial navigation and completion resolve real filesystem paths, so they are unavailable as well."
+    }
+  },
+  "activationEvents": [
+    "onLanguage:haml",
+    "onCommand:haml.lintFile",
+    "onCommand:haml.fixAll",
+    "onCommand:haml.restartLinter",
+    "onCommand:haml.showOutput",
+    "onCommand:haml.wrapInConditional",
+    "onCommand:haml.wrapInBlock",
+    "onCommand:haml.splitToPartial"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "haml",
+        "aliases": [
+          "Haml",
+          "haml",
+          "HAML"
+        ],
+        "extensions": [
+          ".haml"
+        ],
+        "mimetypes": [
+          "text/x-haml"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "haml",
+        "scopeName": "text.haml",
+        "path": "./syntaxes/haml.tmLanguage.json",
+        "embeddedLanguages": {
+          "source.ruby.embedded.haml": "ruby",
+          "source.ruby.embedded.filter.haml": "ruby",
+          "source.ruby.embedded.source": "ruby",
+          "source.ruby.embedded.html": "ruby",
+          "meta.filter.erb.haml": "ruby",
+          "js.haml": "javascript",
+          "js.inline.haml": "javascript",
+          "meta.embedded.css": "css",
+          "meta.embedded.scss": "scss",
+          "meta.embedded.sass": "sass",
+          "source.sass.embedded.filter.haml": "sass",
+          "source.embedded.filter.sass": "sass",
+          "source.coffee.embedded.filter.haml": "coffeescript",
+          "meta.embedded.markdown": "markdown",
+          "meta.embedded.php": "php",
+          "text.plain.embedded.filter.haml": "plaintext"
+        }
+      },
+      {
+        "path": "./syntaxes/haml-interpolation.injection.json",
+        "scopeName": "haml.interpolation.injection",
+        "injectTo": [
+          "text.haml"
+        ]
+      }
+    ],
+    "snippets": [
+      {
+        "language": "haml",
+        "path": "./snippets/haml.code-snippets"
+      }
+    ],
+    "configurationDefaults": {
+      "[haml]": {
+        "editor.defaultFormatter": "cadenza-tech.haml",
+        "editor.formatOnSave": true,
+        "editor.formatOnSaveMode": "file",
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true
+      }
+    },
+    "commands": [
+      {
+        "command": "haml.lintFile",
+        "title": "Lint File",
+        "category": "Haml",
+        "enablement": "editorLangId == haml"
+      },
+      {
+        "command": "haml.fixAll",
+        "title": "Fix All Auto-correctable Offenses",
+        "category": "Haml",
+        "enablement": "editorLangId == haml"
+      },
+      {
+        "command": "haml.wrapInConditional",
+        "title": "Wrap in Conditional",
+        "category": "Haml",
+        "enablement": "editorLangId == haml"
+      },
+      {
+        "command": "haml.wrapInBlock",
+        "title": "Wrap in Block",
+        "category": "Haml",
+        "enablement": "editorLangId == haml"
+      },
+      {
+        "command": "haml.splitToPartial",
+        "title": "Split to Partial",
+        "category": "Haml",
+        "enablement": "editorLangId == haml"
+      },
+      {
+        "command": "haml.restartLinter",
+        "title": "Restart Linter",
+        "category": "Haml"
+      },
+      {
+        "command": "haml.showOutput",
+        "title": "Show Output Channel",
+        "category": "Haml"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "haml.lintFile",
+          "when": "editorLangId == haml"
+        },
+        {
+          "command": "haml.fixAll",
+          "when": "editorLangId == haml"
+        },
+        {
+          "command": "haml.wrapInConditional",
+          "when": "editorLangId == haml"
+        },
+        {
+          "command": "haml.wrapInBlock",
+          "when": "editorLangId == haml"
+        },
+        {
+          "command": "haml.splitToPartial",
+          "when": "editorLangId == haml"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Haml",
+      "properties": {
+        "haml.lint.run": {
+          "type": "string",
+          "enum": [
+            "onSave",
+            "onType",
+            "off"
+          ],
+          "enumDescriptions": [
+            "Lint when a file is opened and when it is saved.",
+            "Lint as you type, debounced by haml.lint.debounceMs.",
+            "Never run haml-lint diagnostics."
+          ],
+          "default": "onSave",
+          "scope": "resource",
+          "description": "When to run haml-lint diagnostics."
+        },
+        "haml.lint.debounceMs": {
+          "type": "number",
+          "default": 500,
+          "minimum": 0,
+          "maximum": 10000,
+          "scope": "resource",
+          "description": "Debounce time in milliseconds before linting while typing. Only used when haml.lint.run is onType."
+        },
+        "haml.lint.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "scope": "resource",
+          "markdownDescription": "Glob patterns of files to skip. haml-lint's own top-level `exclude:` is not applied when linting from stdin, so use this instead."
+        },
+        "haml.formatter": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "safe",
+            "all",
+            "none"
+          ],
+          "enumDescriptions": [
+            "Use safe auto-correct only when a trusted workspace has haml-lint 0.74.0 or newer available. Otherwise formatting is disabled.",
+            "Always use safe auto-correct (haml-lint -a).",
+            "Use safe and unsafe auto-correct (haml-lint -A). Unsafe corrections can change what your program does.",
+            "Disable formatting entirely."
+          ],
+          "default": "auto",
+          "scope": "resource",
+          "markdownDescription": "Which haml-lint auto-correct mode to use for formatting. `all` maps to `haml-lint -A` and can change program semantics."
+        },
+        "haml.hamlLint.executablePath": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "scope": "machine",
+          "description": "Absolute path to the haml-lint executable. When set, bundler detection is skipped."
+        },
+        "haml.hamlLint.useBundler": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "always",
+            "never"
+          ],
+          "enumDescriptions": [
+            "Use bundle exec when a Gemfile.lock listing haml_lint is found.",
+            "Always use bundle exec.",
+            "Never use bundle exec; run haml-lint from PATH."
+          ],
+          "default": "auto",
+          "scope": "machine",
+          "description": "Whether to run haml-lint through bundle exec."
+        },
+        "haml.hamlLint.configPath": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "scope": "machine",
+          "description": "Path to a haml-lint configuration file passed as -c. Relative paths are resolved against the workspace folder."
+        },
+        "haml.hamlLint.timeoutMs": {
+          "type": "number",
+          "default": 15000,
+          "minimum": 1000,
+          "maximum": 120000,
+          "scope": "resource",
+          "description": "How long to wait for a haml-lint process before terminating it."
+        },
+        "haml.snippets.rails": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "on",
+            "off"
+          ],
+          "enumDescriptions": [
+            "Offer Rails view helper snippets only for files on disk that belong to a Rails project.",
+            "Always offer Rails view helper snippets.",
+            "Never offer Rails view helper snippets."
+          ],
+          "default": "auto",
+          "scope": "resource",
+          "markdownDescription": "Whether to offer Rails view helper snippets (`link_to`, `form_with`, `f.text_field`, ...) alongside the built-in Haml snippets. `auto` looks for `config/application.rb` or a `Gemfile.lock` listing `rails`, and is always off outside the local filesystem."
+        },
+        "haml.completions.partials": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "markdownDescription": "Whether to complete partial names inside a `render` call. Candidates come from the `app/views` directory containing the file, or from the file's own directory when there is none."
+        },
+        "haml.completions.dataAttributes": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "markdownDescription": "Whether to complete the `data-*` attributes Turbo, Stimulus and Rails UJS define, in an attribute list. Works in all three Haml notations: `%div{ data: { turbo_frame: 'x' } }`, `%div{ 'data-turbo-frame': 'x' }` and `%div(data-turbo-frame=\"x\")`."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "upgrade": "yarn up \"*\" \"@*/*\"",
+    "vscode:prepublish": "yarn run package",
+    "compile": "yarn run check-types && yarn run check && yarn run build",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "yarn run check-types && yarn run check && node esbuild.js --production",
+    "compile-tests": "tsc -p .",
+    "watch-tests": "tsc -p . -w",
+    "check-types": "tsc --noEmit",
+    "lint": "biome lint",
+    "lint:fix": "biome lint --write",
+    "format": "biome format",
+    "format:fix": "biome format --write",
+    "check": "biome check",
+    "check:fix": "biome check --write",
+    "test": "yarn run compile-tests && yarn run compile && yarn run test:unit && yarn run test:integration",
+    "test:coverage": "yarn run compile-tests && c8 mocha",
+    "test:grammar": "vscode-tmgrammar-snap --config syntaxes/fixtures/grammar-test.config.json -s text.haml \"syntaxes/fixtures/*.haml\"",
+    "test:grammar:update": "vscode-tmgrammar-snap --config syntaxes/fixtures/grammar-test.config.json -s text.haml \"syntaxes/fixtures/*.haml\" -u",
+    "build": "node esbuild.js",
+    "test:unit": "mocha",
+    "test:integration": "vscode-test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.4",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "~24.13.3",
+    "@types/vscode": "~1.57.0",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.0.0",
+    "c8": "^12.0.0",
+    "esbuild": "^0.28.1",
+    "mocha": "^11.7.6",
+    "npm-run-all": "^4.1.5",
+    "ovsx": "^1.0.2",
+    "typescript": "^7.0.2",
+    "vscode-tmgrammar-test": "^0.1.3"
+  },
+  "packageManager": "yarn@4.17.1"
+}

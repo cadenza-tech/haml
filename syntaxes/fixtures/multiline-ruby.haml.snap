@@ -1,0 +1,71 @@
+>-# Trailing-comma continuation: Haml treats a line ending in a comma as unfinished.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>= link_to_remote "Add to cart",
+#^ text.haml meta.line.ruby.haml
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#                              ^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml source.ruby
+>    :url => { :action => "add", :id => product.id },
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#                                                   ^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml source.ruby
+>    :update => { :success => "cart", :failure => "error" }
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>%p after-comma
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^ text.haml
+>-# Explicit pipe continuation: every line of the block ends with a pipe.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>= link_to "x",                    |
+#^ text.haml meta.line.ruby.haml punctuation.definition.ruby.haml
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#                                  ^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml source.ruby
+>    :class => "y"                 |
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#                                  ^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml source.ruby
+>%p after-pipe
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^ text.haml
+>-# Block openers still terminate the line.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>- items.each do |item|
+#^ text.haml meta.line.ruby.haml
+# ^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#             ^^ text.haml meta.line.ruby.haml source.ruby.embedded.html keyword.control.ruby.start-block
+#               ^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.html
+>  %li= item
+#^^ text.haml
+#  ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#   ^^ text.haml meta.tag.haml entity.name.tag.haml
+#     ^ text.haml meta.line.ruby.haml
+#      ^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>%p after-block
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^ text.haml
+>- if user.admin?
+#^ text.haml meta.line.ruby.haml
+# ^^^^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>  %p admin
+#^^ text.haml
+#  ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#   ^ text.haml meta.tag.haml entity.name.tag.haml
+#    ^^^^^^^ text.haml
+>%p after-if
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^ text.haml
+>-# A single line must not swallow what follows it.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>= simple_helper
+#^ text.haml meta.line.ruby.haml
+# ^^^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>%p after-simple
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^ text.haml
+>

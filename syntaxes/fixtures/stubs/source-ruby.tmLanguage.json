@@ -1,0 +1,6 @@
+{
+  "$comment": "Test-only stub. vscode-textmate drops a whole pattern when its include target is not registered, so the vendored grammar's filter regions would be untestable without these.",
+  "scopeName": "source.ruby",
+  "name": "source.ruby",
+  "patterns": []
+}

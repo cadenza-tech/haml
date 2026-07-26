@@ -1,0 +1,10 @@
+{
+  "include": ["out/hamlLint/**", "out/pure/**", "out/configSchema.js"],
+  "reporter": ["text", "html", "json"],
+  "$comment": "Thresholds sit one to two points under the measured numbers: tight enough that a real regression fails, loose enough that a single uncovered guard in a new module does not. If this goes red, add the test rather than lowering the number.",
+  "check-coverage": true,
+  "statements": 98,
+  "lines": 98,
+  "branches": 96,
+  "functions": 97
+}

@@ -1,0 +1,75 @@
+name: Test
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - develop
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Below the 0.74.0 floor: haml-lint corrects RuboCop cops only.
+          # Asserts: haml.formatter "auto" resolves to none, so formatting produces no edits at all
+          # while diagnostics still work. hamlLintSupportsAutocorrect picks the half of
+          # hamlLint.test.ts that belongs to this leg.
+          - haml_lint: '0.73.0'
+          # Above the floor: HAML autocorrect.
+          # Asserts: format round-trip, single-pass stdout+stderr, on-disk bytes unchanged.
+          - haml_lint: '0.76.0'
+    name: test (haml_lint ${{ matrix.haml_lint }})
+    env:
+      HAML_LINT_VERSION: ${{ matrix.haml_lint }}
+      BUNDLE_GEMFILE: ${{ github.workspace }}/src/test/fixtures/gem/Gemfile
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: yarn
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '4.0'
+      # Plain `bundle install` into the default gem home, not `bundler-cache: true`: vendor/bundle keeps
+      # the executable off PATH, and its local .bundle/config does not travel with the Gemfile that
+      # bundlerRoundTrip.test.ts copies into a temp tree.
+      - name: Install the fixture bundle
+        run: bundle install --jobs 4
+      # Both gem-dependent suites self-skip when their probe fails, so without these the job stays green
+      # having tested nothing. One per invocation branch.
+      - name: Verify haml-lint is on PATH
+        run: haml-lint --version
+      - name: Verify haml-lint runs through Bundler
+        run: bundle exec haml-lint --version
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Cache VS Code download
+        uses: actions/cache@v6
+        with:
+          path: .vscode-test
+          key: vscode-test-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+          restore-keys: vscode-test-${{ runner.os }}-
+      # Yarn Berry does not run pre* scripts - verified by deleting dist/ and out/ and running
+      # `yarn test`, which rebuilt neither. Without an explicit build, @vscode/test-cli runs the
+      # extension host against a stale dist/ and finds zero tests in an absent out/, and reports
+      # success either way. The `test` script builds for the same reason; these steps keep the
+      # failure surface separated in CI. `yarn build` rather than `yarn compile`: check-types and
+      # check are the whole content of the Lint workflow, which runs in parallel, and a type error
+      # still fails compile-tests here.
+      - name: Build
+        run: yarn build
+      - name: Compile tests
+        run: yarn compile-tests
+      - name: Run unit tests with coverage
+        run: yarn test:coverage
+      - name: Run integration tests
+        run: xvfb-run -a yarn test:integration

@@ -1,0 +1,57 @@
+!!! 5
+%html{ lang: 'ja' }
+  %head
+    %title= page_title
+    :css
+      body { margin: 0; }
+    :javascript
+      var greeting = "hello";
+  %body
+    -# silent comment, not rendered
+    / rendered html comment
+    /[if IE]
+      %p Please upgrade.
+    #main.container{ data: { role: 'main' } }
+      %a{ href: '#', title: 'x' } Link
+      %input(type="text" name="q" value="search")
+      %li[item]
+        = item.name
+      %span~ preserved_helper
+      %span!= raw_html
+      %span&= escaped_html
+      - if user.admin?
+        %p Admin
+      - elsif user.member?
+        %p Member
+      - else
+        %p Guest
+      - items.each do |item|
+        %li= item
+      .multi{ class: 'a',
+              id: 'b',
+              data: { x: 1 } }
+        Text with #{interpolation} inside.
+      %p
+        Long text continued |
+        across lines |
+      :ruby
+        value = 1 + 2
+      :plain
+        no processing here
+      :escaped
+        <b>escaped</b>
+      :preserve
+        preserved
+      :cdata
+        cdata content
+      :markdown
+        # Heading
+      :sass
+        .a
+          color: red
+      :scss
+        .a { color: red; }
+      :coffee
+        x = 1
+      :erb
+        <%= foo %>

@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "module": "Node16",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    // TypeScript 6+ defaults types to [] (no auto-inclusion of @types); node/mocha globals and node: module imports need explicit listing
+    "types": ["node", "mocha"],
+    "sourceMap": true,
+    "rootDir": "src",
+    "strict": true /* enable all strict type-checking options */,
+    "noUncheckedIndexedAccess": true,
+    "isolatedModules": true,
+    "outDir": "out"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "out", "dist", "tmp", ".vscode-test"]
+}

@@ -1,0 +1,17 @@
+>-# The :php include used to name text.html.php#language, a repository key VS Code's php grammar
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>-# does not have; vscode-textmate then dropped the whole rule and the region went unscoped.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>:php
+#^^^^ text.haml meta.embedded.php entity.name.tag.haml
+>  echo "hello";
+#^^^^^^^^^^^^^^^^ text.haml meta.embedded.php
+>  $x = 1;
+#^^^^^^^^^^ text.haml meta.embedded.php
+>%p after the filter
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^ text.haml
+>

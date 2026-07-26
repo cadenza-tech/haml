@@ -1,0 +1,20 @@
+-# A quote inside #{...} used to open a string in the embedded grammar and corrupt every
+-# following line of the filter (upstream issue #10).
+:javascript
+  var symbol = #{helper.fetch(:key)};
+  var quoted = #{helper.fetch('key')};
+  var double = #{helper.fetch("key")};
+  var escaped = "\#{not_interpolated}";
+  var plain  = 42;
+:css
+  .a { width: #{width_for('sidebar')}px; }
+  .b { color: red; }
+-# Interpolation in ordinary Haml text.
+%p Hello #{user.name}, you have #{count} items.
+-# Nested braces must not close the interpolation early.
+%p #{options.fetch(:a, { b: 'c' })}
+-# A backslash escapes the interpolation, so Haml renders \#{...} literally and none of it is Ruby.
+%p Escaped \#{not_interpolated} stays text
+-# Inside the :ruby filter this is ordinary Ruby string interpolation, not Haml's.
+:ruby
+  greeting = "hello #{name}"

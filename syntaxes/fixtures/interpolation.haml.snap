@@ -1,0 +1,84 @@
+>-# A quote inside #{...} used to open a string in the embedded grammar and corrupt every
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>-# following line of the filter (upstream issue #10).
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>:javascript
+#^^^^^^^^^^^ text.haml js.haml
+>  var symbol = #{helper.fetch(:key)};
+#^^^^^^^^^^^^^^^ text.haml js.haml
+#               ^^ text.haml js.haml meta.embedded.line.ruby.haml punctuation.section.embedded.begin.haml
+#                 ^^^^^^^^^^^^^^^^^^ text.haml js.haml meta.embedded.line.ruby.haml source.ruby
+#                                   ^ text.haml js.haml meta.embedded.line.ruby.haml punctuation.section.embedded.end.haml
+#                                    ^^ text.haml js.haml
+>  var quoted = #{helper.fetch('key')};
+#^^^^^^^^^^^^^^^ text.haml js.haml
+#               ^^ text.haml js.haml meta.embedded.line.ruby.haml punctuation.section.embedded.begin.haml
+#                 ^^^^^^^^^^^^^^^^^^^ text.haml js.haml meta.embedded.line.ruby.haml source.ruby
+#                                    ^ text.haml js.haml meta.embedded.line.ruby.haml punctuation.section.embedded.end.haml
+#                                     ^^ text.haml js.haml
+>  var double = #{helper.fetch("key")};
+#^^^^^^^^^^^^^^^ text.haml js.haml
+#               ^^ text.haml js.haml meta.embedded.line.ruby.haml punctuation.section.embedded.begin.haml
+#                 ^^^^^^^^^^^^^^^^^^^ text.haml js.haml meta.embedded.line.ruby.haml source.ruby
+#                                    ^ text.haml js.haml meta.embedded.line.ruby.haml punctuation.section.embedded.end.haml
+#                                     ^^ text.haml js.haml
+>  var escaped = "\#{not_interpolated}";
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml js.haml
+>  var plain  = 42;
+#^^^^^^^^^^^^^^^^^^^ text.haml js.haml
+>:css
+#^^^^ text.haml meta.embedded.css entity.name.tag.haml
+>  .a { width: #{width_for('sidebar')}px; }
+#^^^^^^^^^^^^^^ text.haml meta.embedded.css
+#              ^^ text.haml meta.embedded.css meta.embedded.line.ruby.haml punctuation.section.embedded.begin.haml
+#                ^^^^^^^^^^^^^^^^^^^^ text.haml meta.embedded.css meta.embedded.line.ruby.haml source.ruby
+#                                    ^ text.haml meta.embedded.css meta.embedded.line.ruby.haml punctuation.section.embedded.end.haml
+#                                     ^^^^^^ text.haml meta.embedded.css
+>  .b { color: red; }
+#^^^^^^^^^^^^^^^^^^^^^ text.haml meta.embedded.css
+>-# Interpolation in ordinary Haml text.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>%p Hello #{user.name}, you have #{count} items.
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^ text.haml
+#         ^^ text.haml meta.embedded.line.ruby.haml punctuation.section.embedded.begin.haml
+#           ^^^^^^^^^ text.haml meta.embedded.line.ruby.haml source.ruby
+#                    ^ text.haml meta.embedded.line.ruby.haml punctuation.section.embedded.end.haml
+#                     ^^^^^^^^^^^ text.haml
+#                                ^^ text.haml meta.embedded.line.ruby.haml punctuation.section.embedded.begin.haml
+#                                  ^^^^^ text.haml meta.embedded.line.ruby.haml source.ruby
+#                                       ^ text.haml meta.embedded.line.ruby.haml punctuation.section.embedded.end.haml
+#                                        ^^^^^^^^ text.haml
+>-# Nested braces must not close the interpolation early.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>%p #{options.fetch(:a, { b: 'c' })}
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^ text.haml
+#   ^^ text.haml meta.embedded.line.ruby.haml punctuation.section.embedded.begin.haml
+#     ^^^^^^^^^^^^^^^^^^ text.haml meta.embedded.line.ruby.haml source.ruby
+#                       ^ text.haml meta.embedded.line.ruby.haml source.ruby
+#                        ^^^^^^^^ text.haml meta.embedded.line.ruby.haml source.ruby
+#                                ^ text.haml meta.embedded.line.ruby.haml source.ruby
+#                                 ^ text.haml meta.embedded.line.ruby.haml source.ruby
+#                                  ^ text.haml meta.embedded.line.ruby.haml punctuation.section.embedded.end.haml
+>-# A backslash escapes the interpolation, so Haml renders \#{...} literally and none of it is Ruby.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>%p Escaped \#{not_interpolated} stays text
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml
+>-# Inside the :ruby filter this is ordinary Ruby string interpolation, not Haml's.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>:ruby
+#^^^^^ text.haml source.ruby.embedded.filter.haml
+>  greeting = "hello #{name}"
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml source.ruby.embedded.filter.haml
+>

@@ -1,0 +1,230 @@
+>!!! 5
+#^^^ text.haml meta.prolog.haml punctuation.definition.prolog.haml
+#   ^^ text.haml meta.prolog.haml
+>%html{ lang: 'ja' }
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^^^^ text.haml meta.tag.haml entity.name.tag.haml
+#     ^ text.haml meta.section.attributes.haml
+#      ^^^^^^^^^^^ text.haml meta.section.attributes.haml
+#                 ^^ text.haml meta.section.attributes.haml
+>  %head
+#^^ text.haml
+#  ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#   ^^^^ text.haml meta.tag.haml entity.name.tag.haml
+>    %title= page_title
+#^^^^ text.haml
+#    ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#     ^^^^^ text.haml meta.tag.haml entity.name.tag.haml
+#          ^ text.haml meta.line.ruby.haml
+#           ^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>    :css
+#^^^^ text.haml meta.embedded.css
+#    ^^^^ text.haml meta.embedded.css entity.name.tag.haml
+>      body { margin: 0; }
+#^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.embedded.css
+>    :javascript
+#^^^^^^^^^^^^^^^ text.haml js.haml
+>      var greeting = "hello";
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml js.haml
+>  %body
+#^^ text.haml
+#  ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#   ^^^^ text.haml meta.tag.haml entity.name.tag.haml
+>    -# silent comment, not rendered
+#^^^^ text.haml comment.block.haml
+#    ^^ text.haml comment.block.haml punctuation.section.comment.haml
+#      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>    / rendered html comment
+#^^^^ text.haml comment.block.haml
+#    ^ text.haml comment.block.haml punctuation.section.comment.haml
+#     ^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>    /[if IE]
+#^^^^ text.haml comment.line.slash.haml punctuation.section.comment.haml
+#    ^^^^^^^^^ text.haml comment.line.slash.haml
+>      %p Please upgrade.
+#^^^^^^ text.haml
+#      ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#       ^ text.haml meta.tag.haml entity.name.tag.haml
+#        ^^^^^^^^^^^^^^^^^ text.haml
+>    #main.container{ data: { role: 'main' } }
+#^^^^ text.haml
+#    ^^^^^ text.haml meta.selector.css entity.other.attribute-name.id
+#         ^^^^^^^^^^ text.haml meta.selector.css entity.other.attribute-name.class
+#                   ^ text.haml meta.section.attributes.haml
+#                    ^^^^^^^^^^^^^^^^^^^^^ text.haml meta.section.attributes.haml
+#                                         ^^ text.haml meta.section.attributes.haml
+#                                           ^^^ text.haml
+>      %a{ href: '#', title: 'x' } Link
+#^^^^^^ text.haml
+#      ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#       ^ text.haml meta.tag.haml entity.name.tag.haml
+#        ^ text.haml meta.section.attributes.haml
+#         ^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.section.attributes.haml
+#                               ^^ text.haml meta.section.attributes.haml
+#                                 ^^^^^^ text.haml
+>      %input(type="text" name="q" value="search")
+#^^^^^^ text.haml
+#      ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#       ^^^^^ text.haml meta.tag.haml entity.name.tag.haml
+#            ^ text.haml meta.section.attributes.plain.haml
+#             ^^^^ text.haml meta.section.attributes.plain.haml constant.other.symbol.ruby
+#                 ^ text.haml meta.section.attributes.plain.haml punctuation
+#                  ^ text.haml meta.section.attributes.plain.haml string.quoted.double.ruby
+#                   ^^^^ text.haml meta.section.attributes.plain.haml string.quoted.double.ruby
+#                       ^ text.haml meta.section.attributes.plain.haml string.quoted.double.ruby
+#                        ^ text.haml meta.section.attributes.plain.haml
+#                         ^^^^ text.haml meta.section.attributes.plain.haml constant.other.symbol.ruby
+#                             ^ text.haml meta.section.attributes.plain.haml punctuation
+#                              ^ text.haml meta.section.attributes.plain.haml string.quoted.double.ruby
+#                               ^ text.haml meta.section.attributes.plain.haml string.quoted.double.ruby
+#                                ^ text.haml meta.section.attributes.plain.haml string.quoted.double.ruby
+#                                 ^ text.haml meta.section.attributes.plain.haml
+#                                  ^^^^^ text.haml meta.section.attributes.plain.haml constant.other.symbol.ruby
+#                                       ^ text.haml meta.section.attributes.plain.haml punctuation
+#                                        ^ text.haml meta.section.attributes.plain.haml string.quoted.double.ruby
+#                                         ^^^^^^ text.haml meta.section.attributes.plain.haml string.quoted.double.ruby
+#                                               ^ text.haml meta.section.attributes.plain.haml string.quoted.double.ruby
+#                                                ^ text.haml meta.section.attributes.plain.haml
+>      %li[item]
+#^^^^^^ text.haml
+#      ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#       ^^ text.haml meta.tag.haml entity.name.tag.haml
+#         ^ text.haml meta.section.object.haml
+#          ^^^^ text.haml meta.section.object.haml
+#              ^ text.haml meta.section.object.haml
+>        = item.name
+#^^^^^^^^ text.haml
+#        ^ text.haml meta.line.ruby.haml
+#         ^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>      %span~ preserved_helper
+#^^^^^^ text.haml
+#      ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#       ^^^^ text.haml meta.tag.haml entity.name.tag.haml
+#           ^ text.haml meta.line.ruby.haml
+#            ^^^^^^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>      %span!= raw_html
+#^^^^^^ text.haml
+#      ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#       ^^^^ text.haml meta.tag.haml entity.name.tag.haml
+#           ^^ text.haml meta.line.ruby.haml
+#             ^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>      %span&= escaped_html
+#^^^^^^ text.haml
+#      ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#       ^^^^ text.haml meta.tag.haml entity.name.tag.haml
+#           ^ text.haml
+#            ^ text.haml meta.line.ruby.haml
+#             ^^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>      - if user.admin?
+#^^^^^^ text.haml
+#      ^ text.haml meta.line.ruby.haml
+#       ^^^^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>        %p Admin
+#^^^^^^^^ text.haml
+#        ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#         ^ text.haml meta.tag.haml entity.name.tag.haml
+#          ^^^^^^^ text.haml
+>      - elsif user.member?
+#^^^^^^ text.haml
+#      ^ text.haml meta.line.ruby.haml
+#       ^^^^^^^^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>        %p Member
+#^^^^^^^^ text.haml
+#        ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#         ^ text.haml meta.tag.haml entity.name.tag.haml
+#          ^^^^^^^^ text.haml
+>      - else
+#^^^^^^ text.haml
+#      ^ text.haml meta.line.ruby.haml
+#       ^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>        %p Guest
+#^^^^^^^^ text.haml
+#        ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#         ^ text.haml meta.tag.haml entity.name.tag.haml
+#          ^^^^^^^ text.haml
+>      - items.each do |item|
+#^^^^^^ text.haml
+#      ^ text.haml meta.line.ruby.haml
+#       ^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#                   ^^ text.haml meta.line.ruby.haml source.ruby.embedded.html keyword.control.ruby.start-block
+#                     ^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.html
+>        %li= item
+#^^^^^^^^ text.haml
+#        ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#         ^^ text.haml meta.tag.haml entity.name.tag.haml
+#           ^ text.haml meta.line.ruby.haml
+#            ^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>      .multi{ class: 'a',
+#^^^^^^ text.haml
+#      ^^^^^^ text.haml meta.selector.css entity.other.attribute-name.class
+#            ^ text.haml meta.section.attributes.haml
+#             ^^^^^^^^^^^^^ text.haml meta.section.attributes.haml
+>              id: 'b',
+#^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.section.attributes.haml
+>              data: { x: 1 } }
+#^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.section.attributes.haml
+#                          ^^ text.haml meta.section.attributes.haml
+#                            ^^^ text.haml
+>        Text with #{interpolation} inside.
+#^^^^^^^^^^^^^^^^^^ text.haml
+#                  ^^ text.haml meta.embedded.line.ruby.haml punctuation.section.embedded.begin.haml
+#                    ^^^^^^^^^^^^^ text.haml meta.embedded.line.ruby.haml source.ruby
+#                                 ^ text.haml meta.embedded.line.ruby.haml punctuation.section.embedded.end.haml
+#                                  ^^^^^^^^^ text.haml
+>      %p
+#^^^^^^ text.haml
+#      ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#       ^ text.haml meta.tag.haml entity.name.tag.haml
+>        Long text continued |
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml
+>        across lines |
+#^^^^^^^^^^^^^^^^^^^^^^^ text.haml
+>      :ruby
+#^^^^^^^^^^^ text.haml source.ruby.embedded.filter.haml
+>        value = 1 + 2
+#^^^^^^^^^^^^^^^^^^^^^^ text.haml source.ruby.embedded.filter.haml
+>      :plain
+#^^^^^^^^^^^^ text.haml text.plain.embedded.filter.haml
+>        no processing here
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml text.plain.embedded.filter.haml
+>      :escaped
+#^^^^^^ text.haml meta.filter.escaped.haml
+#      ^^^^^^^^ text.haml meta.filter.escaped.haml keyword.control.filter.haml
+>        <b>escaped</b>
+#^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.filter.escaped.haml
+>      :preserve
+#^^^^^^ text.haml meta.filter.preserve.haml
+#      ^^^^^^^^^ text.haml meta.filter.preserve.haml keyword.control.filter.haml
+>        preserved
+#^^^^^^^^^^^^^^^^^^ text.haml meta.filter.preserve.haml
+>      :cdata
+#^^^^^^ text.haml meta.filter.cdata.haml
+#      ^^^^^^ text.haml meta.filter.cdata.haml keyword.control.filter.haml
+>        cdata content
+#^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.filter.cdata.haml
+>      :markdown
+#^^^^^^ text.haml meta.embedded.markdown
+#      ^^^^^^^^^ text.haml meta.embedded.markdown entity.name.tag.haml
+>        # Heading
+#^^^^^^^^^^^^^^^^^^ text.haml meta.embedded.markdown
+>      :sass
+#^^^^^^^^^^^ text.haml source.sass.embedded.filter.haml
+>        .a
+#^^^^^^^^^^^ text.haml source.sass.embedded.filter.haml
+>          color: red
+#^^^^^^^^^^^^^^^^^^^^^ text.haml source.sass.embedded.filter.haml
+>      :scss
+#^^^^^^ text.haml meta.embedded.scss
+#      ^^^^^ text.haml meta.embedded.scss entity.name.tag.haml
+>        .a { color: red; }
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.embedded.scss
+>      :coffee
+#^^^^^^^^^^^^^ text.haml source.coffee.embedded.filter.haml
+>        x = 1
+#^^^^^^^^^^^^^^ text.haml source.coffee.embedded.filter.haml
+>      :erb
+#^^^^^^ text.haml meta.filter.erb.haml
+#      ^^^^ text.haml meta.filter.erb.haml keyword.control.filter.haml
+>        <%= foo %>
+#^^^^^^^^^^^^^^^^^^^ text.haml meta.filter.erb.haml
+>

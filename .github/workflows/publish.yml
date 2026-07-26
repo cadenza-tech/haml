@@ -1,0 +1,69 @@
+name: Publish Extension
+on:
+  push:
+    tags:
+      - "v*"
+jobs:
+  # A tag can be cut from any commit, and Lint/Test only run on pull_request and on pushes to
+  # main/develop. vscode:prepublish covers check-types and lint through `package`, so what a tag
+  # could previously skip entirely is the test suite and the grammar snapshots. Cross-workflow
+  # `needs:` does not exist, and querying check-runs for the tagged sha races the workflows the same
+  # push triggers, so the gate lives here. The extension host suites are deliberately left out: they
+  # need xvfb and Ruby, and the realistic failure - a tag cut from a branch that never passed lint -
+  # is caught by the cheap gates.
+  verify:
+    runs-on: ubuntu-latest
+    if: github.repository == 'cadenza-tech/haml'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: yarn
+      # ovsx reads the version from package.json and never looks at the tag. Bumping package.json but
+      # cutting the tag at the previous version therefore publishes the new version under a tag that
+      # names the old one, with nothing failing. The mirror case - tagging without bumping - is
+      # already loud, because Open VSX rejects a duplicate version and ovsx only swallows that error
+      # under --skip-duplicate, which we do not pass. Runs before `yarn install` so the cheapest
+      # check fails first.
+      - name: Verify tag matches package.json version
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          pkg_version="$(node -p 'require("./package.json").version')"
+          if [ "$tag_version" != "$pkg_version" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match package.json version ${pkg_version}" >&2
+            exit 1
+          fi
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Check types
+        run: yarn check-types
+      - name: Lint and format
+        run: yarn check
+      - name: Test grammar
+        run: yarn test:grammar
+      - name: Compile tests
+        run: yarn compile-tests
+      - name: Run unit tests with coverage
+        run: yarn test:coverage
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    if: github.repository == 'cadenza-tech/haml'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: yarn
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Publish to Open VSX
+        run: |
+          npx ovsx publish --no-dependencies --pat ${{ secrets.OVSX_ACCESS_TOKEN }} \
+            --baseContentUrl https://raw.githubusercontent.com/cadenza-tech/haml/main/ \
+            --baseImagesUrl https://raw.githubusercontent.com/cadenza-tech/haml/main/

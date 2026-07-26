@@ -1,0 +1,5 @@
+{
+  "spec": "out/test/{hamlLint,pure}/**/*.test.js",
+  "timeout": 60000,
+  "ui": "tdd"
+}

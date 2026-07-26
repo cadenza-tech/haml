@@ -1,0 +1,19 @@
+-# Trailing-comma continuation: Haml treats a line ending in a comma as unfinished.
+= link_to_remote "Add to cart",
+    :url => { :action => "add", :id => product.id },
+    :update => { :success => "cart", :failure => "error" }
+%p after-comma
+-# Explicit pipe continuation: every line of the block ends with a pipe.
+= link_to "x",                    |
+    :class => "y"                 |
+%p after-pipe
+-# Block openers still terminate the line.
+- items.each do |item|
+  %li= item
+%p after-block
+- if user.admin?
+  %p admin
+%p after-if
+-# A single line must not swallow what follows it.
+= simple_helper
+%p after-simple

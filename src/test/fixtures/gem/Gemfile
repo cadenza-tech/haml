@@ -1,0 +1,12 @@
+# frozen_string_literal: true
+
+# Test fixture only. The version is pinned so the integration tests do not drift with a floating
+# haml_lint (and, through it, a floating RuboCop). CI varies it across a matrix.
+#
+# Deliberately outside rails-like/: bundle install writes a Gemfile.lock next to this file, and a lock
+# naming haml_lint anywhere above a fixture view flips useBundler "auto" onto the bundler path for
+# every integration test. Keeping it here is what lets those tests exercise the PATH branch, which is
+# what a user without haml_lint in their bundle gets.
+source 'https://rubygems.org'
+
+gem 'haml_lint', ENV.fetch('HAML_LINT_VERSION', '0.76.0')

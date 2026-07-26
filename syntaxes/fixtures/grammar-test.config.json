@@ -1,0 +1,55 @@
+{
+  "$comment": "Test-only grammar registry. vscode-tmgrammar-snap resolves include: targets through contributes.grammars, and drops any pattern whose include target is unregistered - which would silently hide every Haml filter region from the snapshots.",
+  "contributes": {
+    "grammars": [
+      {
+        "language": "haml",
+        "scopeName": "text.haml",
+        "path": "../haml.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.coffee",
+        "path": "./stubs/source-coffee.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.css",
+        "path": "./stubs/source-css.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.js",
+        "path": "./stubs/source-js.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.ruby",
+        "path": "./stubs/source-ruby.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.sass",
+        "path": "./stubs/source-sass.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.scss",
+        "path": "./stubs/source-scss.tmLanguage.json"
+      },
+      {
+        "scopeName": "text.html.markdown",
+        "path": "./stubs/text-html-markdown.tmLanguage.json"
+      },
+      {
+        "scopeName": "text.html.php",
+        "path": "./stubs/text-html-php.tmLanguage.json"
+      },
+      {
+        "scopeName": "text.plain",
+        "path": "./stubs/text-plain.tmLanguage.json"
+      },
+      {
+        "path": "../haml-interpolation.injection.json",
+        "scopeName": "haml.interpolation.injection",
+        "injectTo": [
+          "text.haml"
+        ]
+      }
+    ]
+  }
+}
