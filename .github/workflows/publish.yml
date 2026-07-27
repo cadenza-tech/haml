@@ -62,8 +62,12 @@ jobs:
           cache: yarn
       - name: Install dependencies
         run: yarn install --immutable
+      # The token travels in the environment rather than as --pat: argv is readable by every process
+      # on the runner (GitHub only masks it in logs), and ovsx reads OVSX_PAT on its own.
       - name: Publish to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_ACCESS_TOKEN }}
         run: |
-          npx ovsx publish --no-dependencies --pat ${{ secrets.OVSX_ACCESS_TOKEN }} \
+          npx ovsx publish --no-dependencies \
             --baseContentUrl https://raw.githubusercontent.com/cadenza-tech/haml/main/ \
             --baseImagesUrl https://raw.githubusercontent.com/cadenza-tech/haml/main/
