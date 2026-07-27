@@ -50,4 +50,23 @@ suite('layering boundary Test Suite', () => {
     }
     assert.deepStrictEqual(offenders, [], `these modules import vscode and must not: ${offenders.join(', ')}`);
   });
+
+  // Workspace trust is checked inside the process runner, so the gate holds only while every spawn
+  // goes through it. process.ts being the sole importer of child_process is what that rests on, and
+  // like the vscode boundary above it decays quietly unless asserted. Tests are exempt: they run
+  // outside the extension and some drive bundler for real.
+  test('should import child_process only from hamlLint/process', () => {
+    const allowed = path.join('hamlLint', 'process.js');
+    const offenders: string[] = [];
+    for (const file of collectJsFiles(OUT_ROOT)) {
+      const relative = path.relative(OUT_ROOT, file);
+      if (relative === allowed || relative.startsWith(`test${path.sep}`)) {
+        continue;
+      }
+      if (/require\(["'](?:node:)?child_process["']\)/.test(fs.readFileSync(file, 'utf8'))) {
+        offenders.push(relative);
+      }
+    }
+    assert.deepStrictEqual(offenders, [], `these modules import child_process and must not: ${offenders.join(', ')}`);
+  });
 });
