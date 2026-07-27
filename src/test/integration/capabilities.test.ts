@@ -1,6 +1,7 @@
 import * as assert from 'node:assert';
 import { CapabilityCache, type VersionProbe } from '../../capabilities';
 import type { Invocation } from '../../hamlLint/executable';
+import type { SemVerTriple } from '../../hamlLint/version';
 import { Logger } from '../../logger';
 import { config, INVOCATION } from '../support/doubles';
 import { openView } from '../support/host';
@@ -9,6 +10,7 @@ import { wait } from '../support/timing';
 function countingProbe(): VersionProbe & { probes: number } {
   const probe = {
     probes: 0,
+    canProbe: () => true,
     resolve: (): Invocation => INVOCATION,
     async probeVersion() {
       probe.probes++;
@@ -63,6 +65,43 @@ suite('capabilities Test Suite', () => {
       await wait(50);
 
       assert.strictEqual(probe.probes, 1);
+      cache.dispose();
+      logger.dispose();
+    });
+  });
+
+  suite('version', () => {
+    // Regression: a probe failing after invalidate() deleted whatever entry sat under its key,
+    // evicting the fresh probe started for the new settings - which then had to be spawned again.
+    // The delete is guarded the same way as HamlLintClient.run's settle handler.
+    test('should not let a stale failed probe evict the one started after invalidate', async () => {
+      let failFirst: ((version: SemVerTriple | null) => void) | undefined;
+      const probe = {
+        probes: 0,
+        canProbe: () => true,
+        resolve: (): Invocation => INVOCATION,
+        probeVersion(): Promise<SemVerTriple | null> {
+          probe.probes++;
+          if (probe.probes === 1) {
+            return new Promise<SemVerTriple | null>((resolve) => {
+              failFirst = resolve;
+            });
+          }
+          return Promise.resolve<SemVerTriple | null>([0, 76, 0] as const);
+        }
+      };
+      const logger = new Logger();
+      const cache = new CapabilityCache(probe, logger);
+      const document = await openView('clean.haml');
+
+      const first = cache.version(document, config());
+      cache.invalidate();
+      void cache.version(document, config());
+      failFirst?.(null);
+      await first;
+      void cache.version(document, config());
+
+      assert.strictEqual(probe.probes, 2, 'the fresh probe must stay cached when the stale one fails');
       cache.dispose();
       logger.dispose();
     });

@@ -56,8 +56,13 @@ export class CapabilityCache implements vscode.Disposable {
       .then((version) => {
         if (version === null) {
           // Not cached as a failure: the next request re-probes rather than treating a transient
-          // timeout as a permanent "no formatter".
-          this.probes.delete(key);
+          // timeout as a permanent "no formatter". Only the entry this probe owns is deleted -
+          // guarded like HamlLintClient.run's settle handler - because invalidate() may have run
+          // while it was in flight, and the fresh probe under the same key must not lose its entry
+          // to this stale one.
+          if (this.probes.get(key) === probe) {
+            this.probes.delete(key);
+          }
           this.logger.warn(`could not determine the haml-lint version for ${invocation.command}`);
           return null;
         }
@@ -67,7 +72,9 @@ export class CapabilityCache implements vscode.Disposable {
       .catch((error: unknown) => {
         // Logged rather than swallowed: the branch above logs when the probe merely returns null,
         // so a throw being the one silent path was the inconsistency.
-        this.probes.delete(key);
+        if (this.probes.get(key) === probe) {
+          this.probes.delete(key);
+        }
         this.logger.error(`the haml-lint version probe for ${invocation.command} threw: ${error instanceof Error ? error.message : String(error)}`);
         return null;
       });
