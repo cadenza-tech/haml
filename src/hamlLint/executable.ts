@@ -172,20 +172,36 @@ function needsCmdWrapper(command: string, platform: NodeJS.Platform): boolean {
   return lower.endsWith('.bat') || lower.endsWith('.cmd');
 }
 
+/**
+ * What an explicit executablePath may name: an absolute path, taken as given because the user named
+ * a concrete location, or a bare command name, resolved on PATH like the default command. A
+ * relative path is refused (null): spawn would resolve it against cwd, which is the directory
+ * owning .haml-lint.yml - one the repository chooses, not the user - re-opening exactly the
+ * current-directory search that resolveOnPath exists to close.
+ */
+function resolveExplicit(explicit: string, deps: ResolveDeps): string | null {
+  if (pathApi(deps.platform).isAbsolute(explicit)) {
+    return explicit;
+  }
+  return explicit.includes('/') || explicit.includes('\\') ? null : resolveOnPath(explicit, deps);
+}
+
 export function resolveInvocation(input: ResolveInput, deps: ResolveDeps): Invocation {
   const cwd = resolveCwd(input, deps);
 
-  // An explicit path wins outright; bundler detection is skipped. Whether it exists is left to the
-  // spawn: the user named a concrete path, so there is no search for the OS to redo behind us.
+  // An explicit path wins outright; bundler detection is skipped. Whether an absolute path exists
+  // is left to the spawn: the user named a concrete path, so there is no search for the OS to redo
+  // behind us.
   const explicit = input.executablePath?.trim();
   if (explicit) {
+    const command = resolveExplicit(explicit, deps);
     return {
-      command: explicit,
+      command: command ?? explicit,
       argsPrefix: [],
       cwd,
       usesBundler: false,
-      needsCmdWrapper: needsCmdWrapper(explicit, deps.platform),
-      commandMissing: false
+      needsCmdWrapper: needsCmdWrapper(command ?? explicit, deps.platform),
+      commandMissing: command === null
     };
   }
 

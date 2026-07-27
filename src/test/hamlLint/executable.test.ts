@@ -188,6 +188,35 @@ suite('hamlLint/executable Test Suite', () => {
       assert.strictEqual(result.command, 'haml-lint');
     });
 
+    // The setting is documented as an absolute path. Handing a relative one to spawn would resolve
+    // it against cwd - the directory owning .haml-lint.yml, which the repository chooses - so it is
+    // treated like an unresolvable bare name: kept for the notice, never spawned.
+    test('should refuse a relative executablePath instead of leaving it to spawn', () => {
+      const result = resolveInvocation(input({ executablePath: 'bin/haml-lint' }), deps({ 'bin/haml-lint': '' }));
+      assert.strictEqual(result.command, 'bin/haml-lint');
+      assert.strictEqual(result.commandMissing, true);
+    });
+
+    test('should refuse a relative executablePath spelled with backslashes on win32', () => {
+      const win = { platform: 'win32' as const, env: { PATH: 'C:\\bin', PATHEXT: '.EXE' } };
+      const result = resolveInvocation(input({ executablePath: 'bin\\haml-lint.exe' }), deps({}, win));
+      assert.strictEqual(result.commandMissing, true);
+    });
+
+    test('should resolve a bare executablePath on PATH like any other command', () => {
+      const files = deps({ '/opt/tools/haml-lint-wrapper': '' }, { env: { PATH: '/opt/tools' } });
+      const result = resolveInvocation(input({ executablePath: 'haml-lint-wrapper' }), files);
+      assert.strictEqual(result.command, '/opt/tools/haml-lint-wrapper');
+      assert.strictEqual(result.commandMissing, false);
+      assert.strictEqual(result.usesBundler, false);
+    });
+
+    test('should keep a bare executablePath that is not on PATH for the notice', () => {
+      const result = resolveInvocation(input({ executablePath: 'haml-lint-wrapper' }), deps({}));
+      assert.strictEqual(result.command, 'haml-lint-wrapper');
+      assert.strictEqual(result.commandMissing, true);
+    });
+
     test('should build a bundle exec invocation and pin BUNDLE_GEMFILE', () => {
       const files = deps({ '/repo/Gemfile': '', '/repo/Gemfile.lock': LOCK_WITH_HAML_LINT, '/usr/bin/bundle': '' }, { env: { PATH: '/usr/bin' } });
       const result = resolveInvocation(input(), files);

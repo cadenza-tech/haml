@@ -251,7 +251,7 @@
           ],
           "default": null,
           "scope": "machine",
-          "description": "Absolute path to the haml-lint executable. When set, bundler detection is skipped."
+          "description": "Absolute path to the haml-lint executable, or a bare command name resolved on PATH. Relative paths are refused. When set, bundler detection is skipped."
         },
         "haml.hamlLint.useBundler": {
           "type": "string",
