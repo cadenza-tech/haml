@@ -44,8 +44,13 @@ function watchFiles(pattern: string, onChange: () => void): vscode.Disposable {
   return watcher;
 }
 
-/** `bundle install` fires create+change per lock in a burst; one forced sweep at the end is enough. */
-const LOCK_SWEEP_DELAY_MS = 500;
+/**
+ * `bundle install` fires create+change per lock in a burst, and a branch switch can touch
+ * Gemfile.lock, .haml-lint.yml and .rubocop.yml together; one forced sweep at the end is enough.
+ * Un-debounced, each event cancelled the previous event's in-flight runs and respawned Ruby for
+ * every open document.
+ */
+const RULE_SWEEP_DELAY_MS = 500;
 
 function trailingDebounce(action: () => void, delayMs: number): vscode.Disposable & { schedule(): void } {
   let timer: NodeJS.Timeout | undefined;
@@ -120,7 +125,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   };
 
-  const lockSweep = trailingDebounce(() => sweep('Gemfile.lock changed', true), LOCK_SWEEP_DELAY_MS);
+  const ruleSweep = trailingDebounce(() => sweep('lint rules or the bundle changed', true), RULE_SWEEP_DELAY_MS);
 
   context.subscriptions.push(
     vscode.languages.registerDocumentFormattingEditProvider(HAML_SELECTOR, formatter),
@@ -187,23 +192,25 @@ export function activate(context: vscode.ExtensionContext): void {
       // reuse below is keyed on text alone.
       sweep('workspace folders changed', true);
     }),
-    lockSweep,
+    ruleSweep,
     // A changed lock file can flip the extension between bundle exec and the executable on PATH,
     // and can add or remove rails, which is what the Rails snippet detection looks for. The caches
     // drop immediately; only the re-lint is debounced.
     watchFiles(`**/${GEMFILE_LOCK_NAME}`, () => {
       capabilities.invalidate();
       railsCache.invalidate();
-      lockSweep.schedule();
+      ruleSweep.schedule();
     }),
     // The other Rails signal. `rails new --skip-bundle` writes this and no lock file, so without
     // watching it the "not a Rails project" verdict would stick for the rest of the session.
     watchFiles(`**/${APPLICATION_RB_SEGMENTS.join('/')}`, () => railsCache.invalidate()),
     // Neither of these is a VS Code setting, so onDidChangeConfiguration never fires for them.
     // .rubocop.yml counts because haml-lint delegates its Ruby cops to RuboCop, so a rule changed
-    // there changes the offenses reported for a Haml file just as much.
-    watchFiles(`**/${CONFIG_FILE_NAME}`, () => sweep('.haml-lint.yml changed', true)),
-    watchFiles('**/.rubocop.yml', () => sweep('.rubocop.yml changed', true))
+    // there changes the offenses reported for a Haml file just as much. Debounced through the same
+    // sweep as the lock file: a branch switch delivers these events together, and every forced
+    // sweep bypasses the content-digest reuse by design, so back-to-back sweeps are pure respawn.
+    watchFiles(`**/${CONFIG_FILE_NAME}`, () => ruleSweep.schedule()),
+    watchFiles('**/.rubocop.yml', () => ruleSweep.schedule())
   );
 
   // Granting trust mid-session must not require a reload.
