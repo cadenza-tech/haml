@@ -18,6 +18,7 @@ const ONE_OFFENSE: HamlLintReport = {
 /** A probe that answers without a process, so resolveFormatterMode settles on `safe`. */
 function capabilities(logger: Logger): CapabilityCache {
   const probe: VersionProbe = {
+    canProbe: () => true,
     resolve: (): Invocation => INVOCATION,
     async probeVersion() {
       return [0, 76, 0];

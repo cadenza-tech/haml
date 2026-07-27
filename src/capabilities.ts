@@ -15,6 +15,7 @@ export const PROBE_TIMEOUT_MS = 30000;
 
 /** The slice of HamlLintClient this cache needs. Narrow so it can be faked in tests. */
 export interface VersionProbe {
+  canProbe(document: vscode.TextDocument): boolean;
   resolve(document: vscode.TextDocument, config: HamlConfig): Invocation;
   probeVersion(document: vscode.TextDocument, config: HamlConfig, token?: vscode.CancellationToken): Promise<SemVerTriple | null>;
 }
@@ -44,6 +45,12 @@ export class CapabilityCache implements vscode.Disposable {
   }
 
   version(document: vscode.TextDocument, config: HamlConfig): Promise<SemVerTriple | null> {
+    // Refused before resolve(): for a document the probe guard rejects, resolve() falls back to
+    // the extension host's own cwd, which would build a meaningless cache key and - through the
+    // null-probe path below - log a "could not determine" warning for a command never attempted.
+    if (!this.client.canProbe(document)) {
+      return Promise.resolve(null);
+    }
     const invocation = this.client.resolve(document, config);
     const key = `${invocation.command}\u0000${invocation.cwd}`;
     const cached = this.probes.get(key);

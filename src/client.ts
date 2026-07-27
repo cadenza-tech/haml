@@ -78,8 +78,25 @@ export class HamlLintClient {
     );
   }
 
+  /**
+   * Whether a version probe for this document could ever be used.
+   *
+   * A document with neither a path of its own nor a workspace folder is one classifyDocument
+   * refuses, so the probe's answer would go unused - and resolve() would fall back to the
+   * extension host's own cwd, spawning in (and under bundler, evaluating a Gemfile from) a
+   * directory unrelated to anything the user opened.
+   */
+  canProbe(document: vscode.TextDocument): boolean {
+    return fsPathOf(document.uri) !== null || workspaceFolderFor(document.uri) !== undefined;
+  }
+
   /** Probes `haml-lint --version`. Returns null when the executable is missing or unreadable. */
   async probeVersion(document: vscode.TextDocument, config: HamlConfig, token?: vscode.CancellationToken): Promise<SemVerTriple | null> {
+    // The capability cache refuses before building a cache key; checked again here so the guard
+    // cannot be bypassed by a future caller reaching the probe directly.
+    if (!this.canProbe(document)) {
+      return null;
+    }
     let invocation = this.resolve(document, config);
     let result = await this.spawn(invocation, buildVersionArgs(), '', config, token);
     // The same fallback execute() applies: without it, a lock file naming haml_lint in a bundle
