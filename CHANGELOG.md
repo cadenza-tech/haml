@@ -5,6 +5,18 @@ All notable changes to the "Haml" extension will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.1] - 2026-07-28
+
+### Changed
+
+- Changes to `.haml-lint.yml`, `.rubocop.yml` and `Gemfile.lock` now share one debounced re-lint, so a branch switch re-lints open files once instead of once per file event
+- `haml.hamlLint.executablePath` now resolves a bare command name on `PATH` and refuses a relative path, which spawn would have resolved against the linted document's directory
+
+### Fixed
+
+- A version probe failing after a settings or bundle change no longer evicts the probe started for the new state
+- The version probe no longer spawns haml-lint for a document that can never be linted, such as an untitled buffer in a window with no workspace folder
+
 ## [0.0.0] - 2026-07-27
 
 ### Added
@@ -43,4 +55,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Snippets: 239 Rails view helper snippets, offered only when the file belongs to a Rails project
 - Snippets: Haml control flow, filters, doctypes and comments
 
+[0.0.1]: https://github.com/cadenza-tech/haml/compare/v0.0.0...v0.0.1
 [0.0.0]: https://github.com/cadenza-tech/haml/releases/tag/v0.0.0
