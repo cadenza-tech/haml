@@ -5,6 +5,12 @@ All notable changes to the "Haml" extension will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.2] - 2026-08-16
+
+### Added
+
+- Diagnostics: re-run for open files when `.haml-lint_todo.yml` changes, for a `.haml-lint.yml` that pulls it in with `inherits_from`
+
 ## [0.0.1] - 2026-07-28
 
 ### Changed
@@ -55,5 +61,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Snippets: 239 Rails view helper snippets, offered only when the file belongs to a Rails project
 - Snippets: Haml control flow, filters, doctypes and comments
 
+[0.0.2]: https://github.com/cadenza-tech/haml/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/cadenza-tech/haml/compare/v0.0.0...v0.0.1
 [0.0.0]: https://github.com/cadenza-tech/haml/releases/tag/v0.0.0
