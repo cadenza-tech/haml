@@ -49,8 +49,12 @@ function watchFiles(pattern: string, onChange: () => void): vscode.Disposable {
  * Gemfile.lock, .haml-lint.yml and .rubocop.yml together; one forced sweep at the end is enough.
  * Un-debounced, each event cancelled the previous event's in-flight runs and respawned Ruby for
  * every open document.
+ *
+ * Exported for todoWatcher.test.ts, which has to outwait a sweep to prove that the one it observes
+ * came from the watcher under test. A copy of the number there would stop meaning that the moment
+ * this one grew, and nothing would say so.
  */
-const RULE_SWEEP_DELAY_MS = 500;
+export const RULE_SWEEP_DELAY_MS = 500;
 
 function trailingDebounce(action: () => void, delayMs: number): vscode.Disposable & { schedule(): void } {
   let timer: NodeJS.Timeout | undefined;
@@ -204,12 +208,18 @@ export function activate(context: vscode.ExtensionContext): void {
     // The other Rails signal. `rails new --skip-bundle` writes this and no lock file, so without
     // watching it the "not a Rails project" verdict would stick for the rest of the session.
     watchFiles(`**/${APPLICATION_RB_SEGMENTS.join('/')}`, () => railsCache.invalidate()),
-    // Neither of these is a VS Code setting, so onDidChangeConfiguration never fires for them.
+    // None of these is a VS Code setting, so onDidChangeConfiguration never fires for them.
     // .rubocop.yml counts because haml-lint delegates its Ruby cops to RuboCop, so a rule changed
-    // there changes the offenses reported for a Haml file just as much. Debounced through the same
-    // sweep as the lock file: a branch switch delivers these events together, and every forced
-    // sweep bypasses the content-digest reuse by design, so back-to-back sweeps are pure respawn.
+    // there changes the offenses reported for a Haml file just as much. .haml-lint_todo.yml is not
+    // found by haml-lint on its own - only an `inherits_from` in .haml-lint.yml pulls it in - but
+    // its name is a haml-lint constant (ConfigurationLoader::AUTO_GENERATED_FILE) and the file
+    // exists to be edited entry by entry as the offenses are fixed. Every *other* inherits_from
+    // target is an arbitrary path inside an ERB document, so watching those would mean evaluating
+    // it. Debounced through the same sweep as the lock file: a branch switch delivers these events
+    // together, and every forced sweep bypasses the content-digest reuse by design, so back-to-back
+    // sweeps are pure respawn.
     watchFiles(`**/${CONFIG_FILE_NAME}`, () => ruleSweep.schedule()),
+    watchFiles('**/.haml-lint_todo.yml', () => ruleSweep.schedule()),
     watchFiles('**/.rubocop.yml', () => ruleSweep.schedule())
   );
 

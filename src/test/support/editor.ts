@@ -57,6 +57,22 @@ export function labelsOf(items: readonly vscode.CompletionItem[]): string[] {
   return items.map(labelOf);
 }
 
+/**
+ * How many of a document's published diagnostics carry `code`.
+ *
+ * A count rather than a predicate because the two configuration watcher suites need to tell "the
+ * rule is off" from "the rule is on and reporting a different number of lines", which is what makes
+ * a written config file distinguishable from the fixture's own.
+ *
+ * The shape check is not defensive: mapOffenses attaches the linter's documentation URL, so `code`
+ * is the {value, target} form rather than the string it is declared as.
+ */
+export function countDiagnosticsWithCode(uri: vscode.Uri, code: string): number {
+  return vscode.languages
+    .getDiagnostics(uri)
+    .filter((diagnostic) => (typeof diagnostic.code === 'object' && diagnostic.code !== null ? String(diagnostic.code.value) : '') === code).length;
+}
+
 /** Formats with the tabSize and insertSpaces the shipped [haml] defaults give a real editor. */
 export function formatDocument(document: vscode.TextDocument): Thenable<vscode.TextEdit[] | undefined> {
   return vscode.commands.executeCommand<vscode.TextEdit[] | undefined>('vscode.executeFormatDocumentProvider', document.uri, {

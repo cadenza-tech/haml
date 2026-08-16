@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as vscode from 'vscode';
+import { countDiagnosticsWithCode } from '../support/editor';
 import { activateExtension, FIXTURE_VIEWS, fixturePath, openView, skipWithoutHamlLint } from '../support/host';
 import { LINT_RUN_TIMEOUT_MS, waitFor } from '../support/timing';
 
@@ -12,9 +13,7 @@ import { LINT_RUN_TIMEOUT_MS, waitFor } from '../support/timing';
 const OVERRIDE = 'linters:\n  LineLength:\n    enabled: false\n';
 
 function hasLineLength(uri: vscode.Uri): boolean {
-  return vscode.languages
-    .getDiagnostics(uri)
-    .some((diagnostic) => (typeof diagnostic.code === 'object' && diagnostic.code !== null ? String(diagnostic.code.value) : '') === 'LineLength');
+  return countDiagnosticsWithCode(uri, 'LineLength') > 0;
 }
 
 // .haml-lint.yml and .rubocop.yml are not VS Code settings, so onDidChangeConfiguration never fires
