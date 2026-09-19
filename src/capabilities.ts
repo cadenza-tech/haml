@@ -21,7 +21,11 @@ export interface VersionProbe {
 }
 
 export class CapabilityCache implements vscode.Disposable {
-  /** Keyed on the resolved command plus cwd, so switching bundles re-probes. */
+  /**
+   * Keyed on the resolved command, cwd and Gemfile, so switching bundles re-probes. The Gemfile is
+   * part of it because packages under one root .haml-lint.yml share the other two while each
+   * Gemfile.lock pins its own haml_lint.
+   */
   private readonly probes = new Map<string, Promise<SemVerTriple | null>>();
 
   constructor(
@@ -52,7 +56,7 @@ export class CapabilityCache implements vscode.Disposable {
       return Promise.resolve(null);
     }
     const invocation = this.client.resolve(document, config);
-    const key = `${invocation.command}\u0000${invocation.cwd}`;
+    const key = `${invocation.command}\u0000${invocation.cwd}\u0000${invocation.bundleGemfile ?? ''}`;
     const cached = this.probes.get(key);
     if (cached !== undefined) {
       return cached;

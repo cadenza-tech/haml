@@ -105,5 +105,31 @@ suite('capabilities Test Suite', () => {
       cache.dispose();
       logger.dispose();
     });
+
+    // Two packages under one root .haml-lint.yml resolve to the same `bundle` and the same cwd, but
+    // each has its own Gemfile.lock, which can pin a haml_lint on the other side of the 0.74.0 floor.
+    test('should probe again for a bundle that differs only in its Gemfile', async () => {
+      let bundleGemfile = '/repo/packages/a/Gemfile';
+      const probe = {
+        probes: 0,
+        canProbe: () => true,
+        resolve: (): Invocation => ({ ...INVOCATION, usesBundler: true, bundleGemfile }),
+        async probeVersion(): Promise<SemVerTriple | null> {
+          probe.probes++;
+          return [0, 76, 0] as const;
+        }
+      };
+      const logger = new Logger();
+      const cache = new CapabilityCache(probe, logger);
+      const document = await openView('clean.haml');
+
+      await cache.version(document, config());
+      bundleGemfile = '/repo/packages/b/Gemfile';
+      await cache.version(document, config());
+
+      assert.strictEqual(probe.probes, 2, "one package's version must not answer for the other");
+      cache.dispose();
+      logger.dispose();
+    });
   });
 });
