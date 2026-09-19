@@ -1,7 +1,12 @@
 # frozen_string_literal: true
 
 # Test fixture only. The version is pinned so the integration tests do not drift with a floating
-# haml_lint (and, through it, a floating RuboCop). CI varies it across a matrix.
+# haml_lint. CI varies it across a matrix.
+#
+# Haml is capped because haml_lint's adapter lists the Haml versions it accepts, and through 0.76.0
+# that list ends at 7.2: anything newer fails every run with "Cannot handle Haml version" (exit 70).
+# haml_lint 0.77.0 lifted the list, so the cap can go once the matrix floor is above it. No lock file
+# is committed - the two matrix legs resolve differently - so nothing else holds Haml back.
 #
 # Deliberately outside rails-like/: bundle install writes a Gemfile.lock next to this file, and a lock
 # naming haml_lint anywhere above a fixture view flips useBundler "auto" onto the bundler path for
@@ -9,4 +14,5 @@
 # what a user without haml_lint in their bundle gets.
 source 'https://rubygems.org'
 
+gem 'haml', '< 7.3'
 gem 'haml_lint', ENV.fetch('HAML_LINT_VERSION', '0.76.0')
