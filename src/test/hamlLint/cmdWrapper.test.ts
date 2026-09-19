@@ -27,6 +27,15 @@ suite('hamlLint/cmdWrapper Test Suite', () => {
     assert.strictEqual(applyCmdWrapper('x.cmd', [], true, '').command, 'C:\\Windows\\System32\\cmd.exe');
   });
 
+  // The command token is caret-escaped, not quoted, and cmd.exe reads an unquoted `/` as the start
+  // of a switch: `C:/Ruby/bin/haml-lint.bat` would run `C:` - a drive change that exits 0 with an
+  // empty stdout. Forward slashes are the natural spelling in settings.json, where a backslash needs
+  // doubling, and cross-spawn normalizes the command at this same point for the same reason.
+  test('should hand cmd.exe the command with native separators', () => {
+    const result = applyCmdWrapper('C:/Ruby33/bin/haml-lint.bat', ['--stdin'], true, 'C:\\Windows\\System32\\cmd.exe');
+    assert.deepStrictEqual(result.args, ['/d', '/s', '/c', '"C:\\Ruby33\\bin\\haml-lint.bat ^^^"--stdin^^^""']);
+  });
+
   test('should keep paths with spaces one token', () => {
     const result = applyCmdWrapper('C:\\Program Files\\Ruby\\haml-lint.bat', ['--stdin', 'C:\\My Docs\\a.haml'], true);
     assert.ok(result.args[3]?.includes('C:\\Program^ Files\\Ruby\\haml-lint.bat'));

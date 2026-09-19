@@ -4,6 +4,8 @@
 // calls it. Keeping it out of process.ts is what stops that file from looking like it owns two
 // subjects.
 
+import * as path from 'node:path';
+
 export interface ResolvedCommand {
   readonly command: string;
   readonly args: readonly string[];
@@ -59,6 +61,8 @@ export function applyCmdWrapper(
   // `||` rather than `??`, matching cross-spawn: an empty ComSpec must fall back too, or spawn('')
   // throws synchronously and the wrapper path is dead in that environment.
   const shell = comSpec || `${systemRoot || 'C:\\Windows'}\\System32\\cmd.exe`;
-  const line = [escapeCommandToken(command), ...args.map(escapeArgumentToken)].join(' ');
+  // The command token is caret-escaped rather than quoted, and cmd.exe reads an unquoted `/` as the
+  // start of a switch: `C:/Ruby/bin/haml-lint.bat` would run `C:`. cross-spawn normalizes here too.
+  const line = [escapeCommandToken(path.win32.normalize(command)), ...args.map(escapeArgumentToken)].join(' ');
   return { command: shell, args: ['/d', '/s', '/c', `"${line}"`], windowsVerbatimArguments: true };
 }
