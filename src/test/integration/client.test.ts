@@ -430,6 +430,40 @@ suite('client failure logging Test Suite', () => {
     );
     assert.ok(!recording.details.some((text) => text.includes('the users own text')), 'the document must stay out of the log');
   });
+
+  // haml-lint builds its logger from `options[:stderr] ? $stderr : $stdout` (cli.rb), so a lint run -
+  // which passes no --stderr - explains an error exit on stdout and leaves stderr empty. A broken
+  // .haml-lint.yml is exit 78 with the YAML error there, and logging stderr alone said nothing.
+  test('should log what haml-lint wrote to stdout when a lint run exits with an error', async () => {
+    const explanation = "Unable to load configuration from '.haml-lint.yml': did not find expected ','";
+    const runner = recordingRunner([{ ok: true, code: 78, stdout: `${explanation}\n`, stderr: '', durationMs: 10 }]);
+    const client = new HamlLintClient(runner, recording, RESOLVING_DEPS);
+    const document = await openView('offenses.haml');
+
+    const result = await client.run(document, config(), { mode: 'lint' });
+
+    assert.ok(!result.ok && result.reason === 'exit');
+    assert.ok(
+      recording.details.some((text) => text.includes(explanation)),
+      `the explanation must reach the channel, got ${JSON.stringify(recording.details)}`
+    );
+  });
+
+  // A format run is started with --stderr, so the explanation is on stderr there - and stdout is the
+  // corrected document, or the start of one, which has no place in a log.
+  test('should keep stdout out of the log when a format run exits with an error', async () => {
+    const runner = recordingRunner([
+      { ok: true, code: 78, stdout: '%p the users own text\n', stderr: 'Unable to load configuration\n', durationMs: 10 }
+    ]);
+    const client = new HamlLintClient(runner, recording, RESOLVING_DEPS);
+    const document = await openView('offenses.haml');
+
+    const result = await client.run(document, config(), { mode: 'format-and-lint', formatter: 'safe' });
+
+    assert.ok(!result.ok && result.reason === 'exit');
+    assert.ok(recording.details.some((text) => text.includes('Unable to load configuration')));
+    assert.ok(!recording.details.some((text) => text.includes('the users own text')), 'the document must stay out of the log');
+  });
 });
 
 // Closing a document cancels its runs, but one parked on the process runner's concurrency queue

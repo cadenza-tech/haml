@@ -266,6 +266,13 @@ export class HamlLintClient {
     if (result.stderr.trim() !== '') {
       this.logger.detail('stderr', result.stderr);
     }
+    // haml-lint builds its logger from `options[:stderr] ? $stderr : $stdout` (cli.rb), so a lint
+    // run - started without --stderr - explains an error exit on stdout and leaves stderr empty: a
+    // broken .haml-lint.yml is exit 78 with the YAML error there. Only in lint mode, though. A format
+    // run does pass --stderr, and its stdout is the user's document, which has no place in a log.
+    if (reason === 'exit' && mode === 'lint' && result.ok) {
+      this.logger.detail('stdout', result.stdout);
+    }
   }
 
   private buildArgs(

@@ -22,7 +22,7 @@ const EXIT_USAGE = 64;
 const EXIT_OFFENSES = 65;
 /** EX_NOINPUT: file not found / no linters. */
 const EXIT_NO_INPUT = 66;
-/** EX_SOFTWARE: crashed. stderr carries a backtrace. */
+/** EX_SOFTWARE: crashed. The backtrace goes where cli.rb's logger points: stderr with --stderr, stdout without. */
 const EXIT_SOFTWARE = 70;
 /** EX_CONFIG: configuration error. */
 const EXIT_CONFIG = 78;
