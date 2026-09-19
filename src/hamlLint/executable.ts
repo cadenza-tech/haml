@@ -134,8 +134,10 @@ export function findBundlerGemfile(input: ResolveInput, deps: ResolveDeps): stri
 /**
  * Resolves a bare command name to an absolute path by scanning PATH.
  *
- * Empty PATH entries and '.' are dropped: on Windows an empty entry means the current directory,
- * which is exactly the vector this exists to close.
+ * Entries that are not absolute are dropped - the empty entry and '.', which mean the current
+ * directory, and `./bin` alike. A relative entry names a different directory depending on who asks:
+ * the existence check here runs against the extension host's cwd while the spawn runs against the
+ * directory owning .haml-lint.yml, so a repository could supply the file that actually executes.
  */
 export function resolveOnPath(command: string, deps: ResolveDeps): string | null {
   const p = pathApi(deps.platform);
@@ -151,7 +153,8 @@ export function resolveOnPath(command: string, deps: ResolveDeps): string | null
   for (const rawEntry of rawPath.split(separator)) {
     // cmd.exe tolerates quoted PATH entries and some installers write them; existsSync does not.
     const entry = isWindows && rawEntry.startsWith('"') && rawEntry.endsWith('"') && rawEntry.length >= 2 ? rawEntry.slice(1, -1) : rawEntry;
-    if (entry === '' || entry === '.') {
+    // win32 calls `\tools` absolute, but it is relative to a drive - the host's here, the cwd's at spawn.
+    if (!p.isAbsolute(entry) || (isWindows && !/^(?:[A-Za-z]:|[\\/]{2})/.test(entry))) {
       continue;
     }
     for (const extension of extensions) {

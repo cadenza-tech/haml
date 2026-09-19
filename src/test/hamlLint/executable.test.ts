@@ -157,6 +157,22 @@ suite('hamlLint/executable Test Suite', () => {
       assert.strictEqual(resolveOnPath('haml-lint', d), null);
     });
 
+    // `PATH=./bin:$PATH` is a Rails habit. A relative entry means whatever directory the lookup
+    // happens in: the extension host's when the file is checked here, the config directory's when
+    // it is spawned - so the file that was found and the file that runs need not be the same one.
+    test('should skip PATH entries that are not absolute', () => {
+      const d = deps({ 'bin/haml-lint': '', '/usr/local/bin/haml-lint': '' }, { env: { PATH: './bin:bin:/usr/local/bin' } });
+      assert.strictEqual(resolveOnPath('haml-lint', d), '/usr/local/bin/haml-lint');
+    });
+
+    test('should skip a win32 PATH entry that names no drive', () => {
+      const files = { '\\tools\\haml-lint.bat': '', 'D:\\Ruby\\bin\\haml-lint.bat': '', '\\\\server\\share\\haml-lint.bat': '' };
+      const rooted = deps(files, { platform: 'win32', env: { PATH: '\\tools;D:\\Ruby\\bin', PATHEXT: '.BAT' } });
+      assert.strictEqual(resolveOnPath('haml-lint', rooted)?.toLowerCase(), 'd:\\ruby\\bin\\haml-lint.bat');
+      const unc = deps(files, { platform: 'win32', env: { PATH: '\\\\server\\share', PATHEXT: '.BAT' } });
+      assert.strictEqual(resolveOnPath('haml-lint', unc)?.toLowerCase(), '\\\\server\\share\\haml-lint.bat');
+    });
+
     test('should try PATHEXT extensions on win32', () => {
       const d = deps({ 'C:\\Ruby\\bin\\haml-lint.bat': '' }, { platform: 'win32', env: { PATH: 'C:\\Ruby\\bin', PATHEXT: '.EXE;.BAT;.CMD' } });
       // The extension's casing comes from PATHEXT and is irrelevant on a case-insensitive
