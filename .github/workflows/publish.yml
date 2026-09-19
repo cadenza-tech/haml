@@ -1,8 +1,14 @@
 name: Publish Extension
 on:
   push:
+    # Release versions only: vsce refuses a semver prerelease such as 1.0.0-rc.1 while Open VSX
+    # accepts it, so such a tag would ship to one registry and not the other.
     tags:
-      - "v*"
+      - "v[0-9]+.[0-9]+.[0-9]+"
+# The repository default grants write, and every job here runs dependency install scripts; none of
+# them needs to push.
+permissions:
+  contents: read
 jobs:
   # A tag can be cut from any commit, and Lint/Test only run on pull_request and on pushes to
   # main/develop. vscode:prepublish covers check-types and lint through `package`, so what a tag
@@ -22,12 +28,12 @@ jobs:
         with:
           node-version-file: .node-version
           cache: yarn
-      # ovsx reads the version from package.json and never looks at the tag. Bumping package.json but
-      # cutting the tag at the previous version therefore publishes the new version under a tag that
-      # names the old one, with nothing failing. The mirror case - tagging without bumping - is
-      # already loud, because Open VSX rejects a duplicate version and ovsx only swallows that error
-      # under --skip-duplicate, which we do not pass. Runs before `yarn install` so the cheapest
-      # check fails first.
+      # vsce and ovsx read the version from package.json and never look at the tag. Bumping
+      # package.json but cutting the tag at the previous version therefore publishes the new version
+      # under a tag that names the old one, with nothing failing. The mirror case - tagging without
+      # bumping - is already loud, because both registries reject a duplicate version and vsce and
+      # ovsx only swallow that error under --skip-duplicate, which we do not pass. Runs before
+      # `yarn install` so the cheapest check fails first.
       - name: Verify tag matches package.json version
         run: |
           tag_version="${GITHUB_REF_NAME#v}"
@@ -48,7 +54,9 @@ jobs:
         run: yarn compile-tests
       - name: Run unit tests with coverage
         run: yarn test:coverage
-  publish:
+  # Packaged once so both registries receive the same bytes, and so re-running one publish job
+  # uploads the build the other one already shipped rather than a fresh one.
+  package:
     needs: verify
     runs-on: ubuntu-latest
     if: github.repository == 'cadenza-tech/haml'
@@ -62,12 +70,76 @@ jobs:
           cache: yarn
       - name: Install dependencies
         run: yarn install --immutable
+      - name: Package extension
+        run: |
+          npx vsce package --no-dependencies --out haml.vsix \
+            --baseContentUrl https://raw.githubusercontent.com/cadenza-tech/haml/main/ \
+            --baseImagesUrl https://raw.githubusercontent.com/cadenza-tech/haml/main/
+      - name: Upload VSIX
+        uses: actions/upload-artifact@v7
+        with:
+          name: vsix
+          path: haml.vsix
+          if-no-files-found: error
+  # One job per registry: after a failure, "Re-run failed jobs" retries only the registry that
+  # failed, whereas a shared job would publish again to the one that succeeded and be rejected as a
+  # duplicate version.
+  publish-marketplace:
+    needs: package
+    runs-on: ubuntu-latest
+    if: github.repository == 'cadenza-tech/haml'
+    # The Entra ID federated credential trusts the OIDC subject of this environment, so the job has
+    # to run in it. Global Azure DevOps PATs, the documented alternative, stop working on 2026-12-01.
+    environment: marketplace
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: yarn
+      # Only the lockfile-pinned vsce is needed here. Skipping build scripts keeps postinstall code
+      # away from the OIDC request token that every step of this job can read.
+      - name: Install dependencies
+        run: yarn install --immutable --mode=skip-build
+      - name: Download VSIX
+        uses: actions/download-artifact@v8
+        with:
+          name: vsix
+      - name: Log in to Azure
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          allow-no-subscriptions: true
+      # --azure-credential picks up the Azure CLI session azure/login just established.
+      - name: Publish to Visual Studio Marketplace
+        run: npx vsce publish --azure-credential --packagePath haml.vsix
+  publish-open-vsx:
+    needs: package
+    runs-on: ubuntu-latest
+    if: github.repository == 'cadenza-tech/haml'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: yarn
+      - name: Install dependencies
+        run: yarn install --immutable --mode=skip-build
+      - name: Download VSIX
+        uses: actions/download-artifact@v8
+        with:
+          name: vsix
       # The token travels in the environment rather than as --pat: argv is readable by every process
       # on the runner (GitHub only masks it in logs), and ovsx reads OVSX_PAT on its own.
       - name: Publish to Open VSX
         env:
           OVSX_PAT: ${{ secrets.OVSX_ACCESS_TOKEN }}
-        run: |
-          npx ovsx publish --no-dependencies \
-            --baseContentUrl https://raw.githubusercontent.com/cadenza-tech/haml/main/ \
-            --baseImagesUrl https://raw.githubusercontent.com/cadenza-tech/haml/main/
+        run: npx ovsx publish --packagePath haml.vsix

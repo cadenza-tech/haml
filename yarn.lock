@@ -1242,7 +1242,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vscode/vsce@npm:^3.7.1":
+"@vscode/vsce@npm:^3.7.1, @vscode/vsce@npm:^3.9.2":
   version: 3.9.2
   resolution: "@vscode/vsce@npm:3.9.2"
   dependencies:
@@ -2839,6 +2839,7 @@ __metadata:
     "@types/vscode": "npm:~1.57.0"
     "@vscode/test-cli": "npm:^0.0.15"
     "@vscode/test-electron": "npm:^3.0.0"
+    "@vscode/vsce": "npm:^3.9.2"
     c8: "npm:^12.0.0"
     esbuild: "npm:^0.28.1"
     mocha: "npm:^11.7.6"
