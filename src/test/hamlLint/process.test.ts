@@ -197,6 +197,23 @@ suite('hamlLint/process Test Suite', () => {
       assert.deepStrictEqual(signalled, []);
     });
 
+    // A child slow to die on SIGTERM is still alive when the timeout comes due, and answering
+    // `timeout` for it records a back-off against a document whose run was merely superseded: the
+    // next save is then skipped as "timed out before" with nothing having timed out.
+    test('should keep calling a cancelled run cancelled when the timeout expires while it dies', async function () {
+      if (process.platform === 'win32') {
+        // taskkill /F has no grace period for the timeout to land in.
+        this.skip();
+      }
+      const cancellation = token();
+      const ignoresSigterm = 'process.on("SIGTERM",()=>{});setTimeout(()=>{},30000)';
+      const promise = runner({ killGraceMs: 1500 }).run(request(ignoresSigterm, { timeoutMs: 1000 }), cancellation);
+      setTimeout(() => cancellation.cancel(), 500);
+      const result = await promise;
+      assert.ok(!result.ok);
+      assert.strictEqual(result.reason, 'cancelled');
+    });
+
     test('should stop on cancellation', async () => {
       const cancellation = token();
       const promise = runner().run(request('setTimeout(()=>{},30000)'), cancellation);

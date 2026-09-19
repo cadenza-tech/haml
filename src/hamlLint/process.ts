@@ -211,12 +211,6 @@ export function createProcessRunner(deps: ProcessRunnerDeps): DisposableProcessR
           killTree(child, platform);
           return;
         }
-        // Once only. A timeout and a cancellation can both arrive for one run, and a second timer
-        // armed over the first would leave the first to fire after cleanup() - at a group id that by
-        // then belongs to nobody, or to somebody else.
-        if (killTimer !== undefined) {
-          return;
-        }
         signalGroup(child, 'SIGTERM');
         killTimer = setTimeout(() => signalGroup(child, 'SIGKILL'), killGraceMs);
       };
@@ -290,12 +284,23 @@ export function createProcessRunner(deps: ProcessRunnerDeps): DisposableProcessR
         finish({ ok: true, code, stdout: decode(stdoutChunks), stderr: decode(stderrChunks), durationMs: Date.now() - startedAt });
       });
 
+      // Whichever comes first names the outcome, and is the only one to terminate. A cancelled child
+      // can take its whole grace period to die, and a timeout coming due in the meantime would
+      // otherwise be what 'close' reports - which records a back-off against a document whose run was
+      // merely superseded. A second terminate() would also arm a second kill timer over the first,
+      // leaving the first to fire after cleanup() at a group id that by then may be somebody else's.
       timeoutTimer = setTimeout(() => {
+        if (cancelled) {
+          return;
+        }
         timedOut = true;
         terminate();
       }, request.timeoutMs);
 
       subscription = token?.onCancellationRequested(() => {
+        if (timedOut || cancelled) {
+          return;
+        }
         cancelled = true;
         terminate();
       });
