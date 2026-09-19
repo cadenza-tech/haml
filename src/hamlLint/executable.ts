@@ -148,7 +148,12 @@ export function resolveOnPath(command: string, deps: ResolveDeps): string | null
   const isWindows = deps.platform === 'win32';
   const separator = isWindows ? ';' : ':';
   const rawPath = deps.env.PATH ?? deps.env.Path ?? '';
-  const extensions = isWindows ? (deps.env.PATHEXT ?? '.COM;.EXE;.BAT;.CMD').split(';').filter((e) => e !== '') : [''];
+  const pathExt = isWindows ? (deps.env.PATHEXT ?? '.COM;.EXE;.BAT;.CMD').split(';').filter((e) => e !== '') : [''];
+  // cmd.exe tries a name that already carries one of these as it stands before appending any. Only
+  // then: RubyInstaller ships an extensionless `haml-lint` Ruby script beside haml-lint.bat, and
+  // CreateProcess cannot start that one.
+  const carriesExtension = isWindows && pathExt.some((extension) => command.toLowerCase().endsWith(extension.toLowerCase()));
+  const extensions = carriesExtension ? ['', ...pathExt] : pathExt;
 
   for (const rawEntry of rawPath.split(separator)) {
     // cmd.exe tolerates quoted PATH entries and some installers write them; existsSync does not.

@@ -180,6 +180,24 @@ suite('hamlLint/executable Test Suite', () => {
       assert.strictEqual(resolveOnPath('haml-lint', d)?.toLowerCase(), 'c:\\ruby\\bin\\haml-lint.bat');
     });
 
+    // cmd.exe tries a name that already carries a PATHEXT extension as it stands, before appending
+    // any. Only appending made `"haml.hamlLint.executablePath": "haml-lint.bat"` probe
+    // haml-lint.bat.EXE, haml-lint.bat.BAT, ... and report an installed executable as missing.
+    test('should find a win32 command that already carries its extension', () => {
+      const d = deps({ 'C:\\Ruby\\bin\\haml-lint.bat': '' }, { platform: 'win32', env: { PATH: 'C:\\Ruby\\bin', PATHEXT: '.EXE;.BAT;.CMD' } });
+      assert.strictEqual(resolveOnPath('haml-lint.bat', d), 'C:\\Ruby\\bin\\haml-lint.bat');
+    });
+
+    // RubyInstaller ships an extensionless `haml-lint` Ruby script beside haml-lint.bat, and
+    // CreateProcess cannot start it: a name with no PATHEXT extension must never match as it stands.
+    test('should not match an extensionless win32 file as it stands', () => {
+      const d = deps(
+        { 'C:\\Ruby\\bin\\haml-lint': '', 'C:\\Ruby\\bin\\haml-lint.bat': '' },
+        { platform: 'win32', env: { PATH: 'C:\\Ruby\\bin', PATHEXT: '.EXE;.BAT;.CMD' } }
+      );
+      assert.strictEqual(resolveOnPath('haml-lint', d)?.toLowerCase(), 'c:\\ruby\\bin\\haml-lint.bat');
+    });
+
     test('should verify an explicit path instead of scanning PATH', () => {
       assert.strictEqual(resolveOnPath('/opt/haml-lint', deps({ '/opt/haml-lint': '' })), '/opt/haml-lint');
       assert.strictEqual(resolveOnPath('/opt/haml-lint', deps({})), null);
