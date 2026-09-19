@@ -11,12 +11,9 @@ permissions:
   contents: read
 jobs:
   # A tag can be cut from any commit, and Lint/Test only run on pull_request and on pushes to
-  # main/develop. vscode:prepublish covers check-types and lint through `package`, so what a tag
-  # could previously skip entirely is the test suite and the grammar snapshots. Cross-workflow
-  # `needs:` does not exist, and querying check-runs for the tagged sha races the workflows the same
-  # push triggers, so the gate lives here. The extension host suites are deliberately left out: they
-  # need xvfb and Ruby, and the realistic failure - a tag cut from a branch that never passed lint -
-  # is caught by the cheap gates.
+  # main/develop. Cross-workflow `needs:` does not exist, and querying check-runs for the tagged sha
+  # races the workflows the same push triggers, so the gate lives here: the cheap checks in this job,
+  # and the whole Test workflow called as a job below.
   verify:
     runs-on: ubuntu-latest
     if: github.repository == 'cadenza-tech/haml'
@@ -50,14 +47,23 @@ jobs:
         run: yarn check
       - name: Test grammar
         run: yarn test:grammar
-      - name: Compile tests
-        run: yarn compile-tests
-      - name: Run unit tests with coverage
-        run: yarn test:coverage
+  # Everything that needs Ruby or an extension host: both haml_lint legs, the bundler round trip and
+  # the integration suites - which is to say everything this extension does with haml-lint. Unit tests
+  # alone are no substitute: without Ruby every gem-dependent suite skips itself, so a red Test
+  # workflow never stopped a release. A release is rare enough to wait the extra minutes, and a suite
+  # that fails under load costs a re-run of this job, not a bad publish.
+  # This workflow must not take a `concurrency` group of the shape test.yml uses: under a call both
+  # expressions evaluate in the caller's context, so the two would claim the same group, and GitHub
+  # ends such a run as a deadlock instead of publishing.
+  test:
+    if: github.repository == 'cadenza-tech/haml'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/test.yml
   # Packaged once so both registries receive the same bytes, and so re-running one publish job
   # uploads the build the other one already shipped rather than a fresh one.
   package:
-    needs: verify
+    needs: [verify, test]
     runs-on: ubuntu-latest
     if: github.repository == 'cadenza-tech/haml'
     steps:

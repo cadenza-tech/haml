@@ -5,6 +5,10 @@ on:
     branches:
       - main
       - develop
+  # Called by publish.yml, so that a tag cannot ship what this suite has not passed. Under a call
+  # `github.workflow` and `github.ref` below are the caller's, so a release run gets a concurrency
+  # group of its own and never cancels, or waits behind, a branch run.
+  workflow_call:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
