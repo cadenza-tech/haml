@@ -6,7 +6,7 @@
 
 import type { HamlLintReport } from '../types';
 import { classifyExitCode } from './exitCodes';
-import { parseReport } from './parser';
+import { parseReport, parseReportLine } from './parser';
 import type { SpawnFailureReason, SpawnResult } from './process';
 
 /**
@@ -110,13 +110,26 @@ export function interpretResult(result: SpawnResult, mode: RunRequest['mode'], c
     return failure('exit', classification.reason);
   }
 
-  const payload = mode === 'lint' ? result.stdout : result.stderr;
-  const parsed = parseReport(payload);
-  if (!parsed.ok) {
-    // Bundler and gems occasionally write to the same stream, and exit 70 puts a backtrace there.
-    return failure('unparseable-report', 'could not parse the haml-lint report; keeping the previous diagnostics');
+  if (mode === 'lint') {
+    const parsed = parseReport(result.stdout);
+    if (!parsed.ok) {
+      // Bundler and gems occasionally write to the same stream, and exit 70 puts a backtrace there.
+      return failure('unparseable-report', 'could not parse the haml-lint report; keeping the previous diagnostics');
+    }
+    return { ok: true, outcome: { report: parsed.report } };
   }
 
-  const correctedSource = mode === 'lint' ? undefined : result.stdout;
-  return { ok: true, outcome: { report: parsed.report, ...(correctedSource === undefined ? {} : { correctedSource }) } };
+  // The report shares stderr with every warning Ruby, Bundler or a gem prints, so it is looked for
+  // line by line. Finding it there is also what vouches for stdout: a wrapper that merges the streams
+  // leaves the report in stdout, and then stdout is not a corrected source to write back.
+  const parsed = parseReportLine(result.stderr);
+  if (!parsed.ok) {
+    return failure('unparseable-report', 'could not find the haml-lint report on stderr; applying no corrections');
+  }
+  // And the other half of the same check: a wrapper that copies both streams into both (`tee`) puts
+  // a report on stderr *and* in stdout, which is then still not a corrected source.
+  if (parseReportLine(result.stdout).ok) {
+    return failure('unparseable-report', 'found a haml-lint report in stdout, where the corrected source belongs; applying no corrections');
+  }
+  return { ok: true, outcome: { report: parsed.report, correctedSource: result.stdout } };
 }

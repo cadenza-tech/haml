@@ -1,5 +1,5 @@
 import * as assert from 'node:assert';
-import { parseReport } from '../../hamlLint/parser';
+import { parseReport, parseReportLine } from '../../hamlLint/parser';
 
 function report(files: unknown, metadata?: unknown): string {
   return JSON.stringify({ metadata: metadata ?? { haml_lint_version: '0.76.0' }, files, summary: {} });
@@ -144,5 +144,41 @@ suite('hamlLint/parser Test Suite', () => {
       const result = parseReport(input);
       assert.ok(!result.ok);
     }
+  });
+
+  // The stderr of a format run, which the report shares with whatever Ruby or a gem warns about.
+  suite('parseReportLine', () => {
+    const line = report([{ path: 'x', offenses: [{ severity: 'warning', message: 'm', location: { line: 3 } }] }]);
+
+    test('should read a report that has the stream to itself', () => {
+      const result = parseReportLine(line);
+      assert.ok(result.ok);
+      assert.strictEqual(result.report.offenses.length, 1);
+    });
+
+    test('should find the report between warnings, with either line ending', () => {
+      for (const eol of ['\n', '\r\n']) {
+        const result = parseReportLine(['warning: loading', line, 'warning: at exit', ''].join(eol));
+        assert.ok(result.ok, JSON.stringify(eol));
+        assert.strictEqual(result.report.offenses.length, 1);
+      }
+    });
+
+    // Still a whole line or nothing: a report with text glued to it is not one this can vouch for.
+    test('should not salvage a report from the middle of a line', () => {
+      assert.ok(!parseReportLine(`warning: ${line}`).ok);
+    });
+
+    test('should fail when no line is a report, keeping the raw text for the log', () => {
+      const result = parseReportLine('warning: one\n{"not":"a report"}\n');
+      assert.ok(!result.ok);
+      assert.strictEqual(result.raw, 'warning: one\n{"not":"a report"}\n');
+    });
+
+    test('should never throw for non-string input', () => {
+      for (const input of [undefined, null, 42]) {
+        assert.ok(!parseReportLine(input).ok);
+      }
+    });
   });
 });
