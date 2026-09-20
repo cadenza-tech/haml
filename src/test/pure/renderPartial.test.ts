@@ -285,11 +285,14 @@ suite('pure/renderPartial Test Suite', () => {
   // keystroke. The repeated-token line is the input that punishes slicing the prefix per candidate:
   // without the candidate limit its 5000 `render` tokens would each slice the whole prefix.
   // The line of keywords is the one that punishes looking for a comma past the literal being read:
-  // every `partial:` value is a name, and none of them holds a comma to stop the search early.
+  // every `partial:` value is a name, and none of them holds a comma to stop the search early. It is
+  // a megabyte because that search is a native indexOf, which c8 does not slow down while it slows
+  // the scan around it: at a quarter of the size the search costs 249 ms, inside the budget c8 is
+  // given, against 29 ms without it. At this size it is 3597 ms against 27.
   test('should stay fast on a very long line', () => {
     const repeated = `= render ${'render '.repeat(5000)}'x'`;
     const dataUri = `%img{src: "data:image/png;base64,${'A'.repeat(100000)}"}= render 'x'`;
-    const keywords = `= render ${"partial: 'x' ".repeat(20000)}`;
+    const keywords = `= render ${"partial: 'x' ".repeat(80000)}`;
     const elapsed = fastestOf(() => {
       partialReferenceAt(dataUri, 100060);
       partialReferenceAt(repeated, repeated.length);

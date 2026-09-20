@@ -1,7 +1,15 @@
 // Shared by the "should stay fast on a very long line" guards in src/test/pure.
 
-/** The budget every one of those guards is held to, so it is one decision rather than three. */
-export const FAST_ENOUGH_MS = 50;
+/**
+ * The budget every one of those guards is held to, so it is one decision rather than five.
+ *
+ * Several times as much under c8, which is the only way CI runs these suites: V8's precise coverage
+ * costs the scans between four and nine times their speed, and 50 ms left the slowest of them
+ * failing whenever the machine was busy. c8 is recognised by the NODE_V8_COVERAGE it sets for the
+ * process it measures. A guard's input has to be large enough for the regression it exists for to
+ * clear the larger budget as well.
+ */
+export const FAST_ENOUGH_MS = process.env.NODE_V8_COVERAGE === undefined ? 50 : 400;
 
 /**
  * The fastest of several runs, in milliseconds.
