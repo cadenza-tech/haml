@@ -42,6 +42,12 @@ export interface AttributePosition {
   /** Characters before the name that the insertion rewrites, i.e. an opening quote. */
   readonly markerLength: number;
   readonly marker: string;
+  /**
+   * Characters after the cursor that the insertion rewrites as well: the closing quote, when it is
+   * the very next character. Typing the opening one makes VS Code write it, and every quoted item
+   * brings its own, so leaving it there turns `'data-tur|'` into `'data-turbo-frame': '''`.
+   */
+  readonly trailingLength: number;
 }
 
 interface ScanResult {
@@ -169,8 +175,20 @@ function syntaxOf(frame: Frame, depth: number): AttributeSyntax | null {
   return depth === 2 && frame.ownerKey === DATA_KEY ? 'rubyDataHash' : null;
 }
 
-/** Null wherever an attribute name cannot go. */
-export function classifyAttributePosition(linePrefix: string): AttributePosition | null {
+/**
+ * Whether the quote at the start of `lineSuffix` closes a key that already has its value: `': 'x'`,
+ * `' => 1`. A lone `::` is a constant path, not a separator.
+ */
+function closesKeyWithValue(lineSuffix: string): boolean {
+  const next = skipSpaces(lineSuffix, 1);
+  if (lineSuffix.startsWith('=>', next)) {
+    return true;
+  }
+  return lineSuffix[next] === ':' && lineSuffix[next + 1] !== ':';
+}
+
+/** Null wherever an attribute name cannot go. `lineSuffix` is the rest of the line after the cursor. */
+export function classifyAttributePosition(linePrefix: string, lineSuffix: string): AttributePosition | null {
   const scanned = scan(linePrefix);
   if (scanned === null || scanned.frame === null || scanned.frame.sawValueSeparator) {
     return null;
@@ -191,17 +209,26 @@ export function classifyAttributePosition(linePrefix: string): AttributePosition
     if (scanned.openLiteralStart !== start - 1) {
       return null;
     }
+    const marker = linePrefix.slice(start - 1, start);
+    const closesHere = lineSuffix.startsWith(marker);
+    // A key that already has its value is being edited, not written: every item would put a second
+    // separator and a second value in front of the first. Offering nothing beats that.
+    if (closesHere && closesKeyWithValue(lineSuffix)) {
+      return null;
+    }
     return {
       syntax,
       identifierLength: linePrefix.length - start,
       markerLength: 1,
-      marker: linePrefix.slice(start - 1, start)
+      marker,
+      trailingLength: closesHere ? 1 : 0
     };
   }
   return {
     syntax,
     identifierLength: linePrefix.length - start,
     markerLength: 0,
-    marker: ''
+    marker: '',
+    trailingLength: 0
   };
 }

@@ -4,16 +4,17 @@ import type { AttributeSyntax } from '../../types';
 import { FAST_ENOUGH_MS, fastestOf } from '../support/timing';
 
 function syntaxAt(linePrefix: string): AttributeSyntax | null {
-  return classifyAttributePosition(linePrefix)?.syntax ?? null;
+  return classifyAttributePosition(linePrefix, '')?.syntax ?? null;
 }
 
 /** What the line becomes once an item is accepted, so expectations read as Haml. */
-function applied(linePrefix: string, body: string): string | null {
-  const position = classifyAttributePosition(linePrefix);
+function applied(linePrefix: string, body: string, lineSuffix = ''): string | null {
+  const position = classifyAttributePosition(linePrefix, lineSuffix);
   if (position === null) {
     return null;
   }
-  return linePrefix.slice(0, linePrefix.length - position.identifierLength - position.markerLength) + body;
+  const kept = linePrefix.slice(0, linePrefix.length - position.identifierLength - position.markerLength);
+  return kept + body + lineSuffix.slice(position.trailingLength);
 }
 
 suite('pure/attributePosition Test Suite', () => {
@@ -66,10 +67,10 @@ suite('pure/attributePosition Test Suite', () => {
     });
 
     test('should report the marker so the filter can match past the quote', () => {
-      const quoted = classifyAttributePosition("%div{ 'data-tur");
+      const quoted = classifyAttributePosition("%div{ 'data-tur", '');
       assert.strictEqual(quoted?.marker, "'");
       assert.strictEqual(quoted?.identifierLength, 'data-tur'.length);
-      const bare = classifyAttributePosition('%div{ dat');
+      const bare = classifyAttributePosition('%div{ dat', '');
       assert.strictEqual(bare?.marker, '');
       assert.strictEqual(bare?.identifierLength, 3);
     });
@@ -145,13 +146,45 @@ suite('pure/attributePosition Test Suite', () => {
     });
   });
 
+  // Typing the opening quote makes VS Code write the closing one too, and the item brings its own:
+  // accepted over `%a{ 'data-tur|'}` it left `%a{ 'data-turbo-frame': '''}`, which Haml rejects with
+  // "Unbalanced brackets".
+  suite('the quote VS Code closed automatically', () => {
+    test('should be replaced along with the opening one', () => {
+      assert.strictEqual(applied("%a{ 'data-tur", "'data-turbo-frame': '$1'", "'}"), "%a{ 'data-turbo-frame': '$1'}");
+      assert.strictEqual(applied('%a{ "data-tur', "'data-turbo-frame': '$1'", '"}'), "%a{ 'data-turbo-frame': '$1'}");
+      assert.strictEqual(applied("%a{ data: { 'tur", "turbo_frame: '$1'", "'}}"), "%a{ data: { turbo_frame: '$1'}}");
+    });
+
+    test('should be left alone when it is not the one that closes this literal', () => {
+      assert.strictEqual(classifyAttributePosition("%a{ 'data-tur", '"}')?.trailingLength, 0);
+      assert.strictEqual(classifyAttributePosition("%a{ 'data-tur", " '}")?.trailingLength, 0);
+      assert.strictEqual(classifyAttributePosition("%a{ 'data-tur", '')?.trailingLength, 0);
+    });
+
+    // The quote closes a key that already has its value. An item would write a second separator and
+    // a second value in front of it - `'data-turbo-frame': '': 'x'` - so nothing is offered, the same
+    // call this file makes for a closing quote on the other side of the cursor.
+    test('should offer nothing inside a quoted key that already has a value', () => {
+      for (const suffix of ["': 'x' }", "' => 1 }", "'  :  1 }"]) {
+        assert.strictEqual(classifyAttributePosition("%a{ 'data-tur", suffix), null, suffix);
+      }
+      assert.strictEqual(classifyAttributePosition("%a{ 'data-tur", "'::Foo }")?.trailingLength, 1, 'a constant path is not a separator');
+    });
+
+    test('should not reach past the cursor for an unquoted name', () => {
+      assert.strictEqual(classifyAttributePosition('%a{ data-tur', "'}")?.trailingLength, 0);
+      assert.strictEqual(classifyAttributePosition('%a(data-tur', '")')?.trailingLength, 0);
+    });
+  });
+
   // The same constraint completionWord documents: this runs on every keystroke.
   test('should stay fast on a very long line', () => {
     const dataUri = `%img{src: "data:image/png;base64,${'A'.repeat(100000)}", dat`;
     const plainText = `%p ${'a'.repeat(100000)} dat`;
     const elapsed = fastestOf(() => {
-      classifyAttributePosition(dataUri);
-      classifyAttributePosition(plainText);
+      classifyAttributePosition(dataUri, '');
+      classifyAttributePosition(plainText, '');
     });
     assert.ok(elapsed < FAST_ENOUGH_MS, `took ${elapsed}ms`);
   });

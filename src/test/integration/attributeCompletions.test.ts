@@ -29,6 +29,22 @@ suite('data attribute completion integration Test Suite', () => {
     assert.ok(labels.includes('data-turbo-frame'), labels.join(' '));
   });
 
+  // Typed for real, because the quote this is about is one the editor writes: `'` arrives as `''`.
+  test('should leave balanced quotes behind when a quoted key is accepted', async () => {
+    const scratch = await vscode.workspace.openTextDocument({ language: 'haml', content: '' });
+    const editor = await vscode.window.showTextDocument(scratch, { preview: false });
+    for (const character of "%a{ 'data-turbo-fr") {
+      await vscode.commands.executeCommand('type', { text: character });
+    }
+    const [item] = (await completionsAt(scratch, "%a{ 'data-turbo-fr")).filter((candidate) => labelsOf([candidate])[0] === 'data-turbo-frame');
+    assert.ok(item?.range instanceof vscode.Range, 'the item must carry its own range');
+
+    await editor.insertSnippet(item.insertText as vscode.SnippetString, item.range);
+
+    assert.strictEqual(scratch.lineAt(0).text, "%a{ 'data-turbo-frame': ''}");
+    await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
+  });
+
   test('should complete HTML-style attribute names', async () => {
     const labels = await labelsAfter(document, '%span(data-turbo-a');
     assert.ok(labels.includes('data-turbo-action'), labels.join(' '));
