@@ -29,7 +29,9 @@ export interface InsertionSpec {
  * and writing the pair at column 0 there is not neutral: the `enable` marker is a silent comment,
  * and anything after it indented deeper is swallowed out of the rendered output. The following
  * non-blank line's indent is the one level that can never swallow it; a trailing blank falls back
- * to the preceding line, after which nothing follows that could be swallowed at any indent.
+ * to the preceding line, after which nothing follows that could be swallowed at any indent - or
+ * rather to the first line of whatever that line is a part of. The last line of a filter body is
+ * indented like the body, and a comment written at that indent is emitted into the page with it.
  */
 function insertionIndent(lineIndex: number, document: DocumentSnapshot): string {
   const target = document.lineAt(lineIndex);
@@ -43,9 +45,9 @@ function insertionIndent(lineIndex: number, document: DocumentSnapshot): string 
     }
   }
   for (let index = lineIndex - 1; index >= 0; index--) {
-    const line = document.lineAt(index);
-    if (!isBlankText(line.text)) {
-      return line.text.slice(0, line.firstNonWhitespaceCharacterIndex);
+    if (!isBlankText(document.lineAt(index).text)) {
+      const owner = document.lineAt(findConstructStart(index, document));
+      return owner.text.slice(0, owner.firstNonWhitespaceCharacterIndex);
     }
   }
   return '';

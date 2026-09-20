@@ -318,6 +318,43 @@ suite('pure/disableComment Test Suite', () => {
       ]);
     });
 
+    // The preceding line is no guide when it is part of something larger. The last line of a filter
+    // body is indented like the body, and a comment written at that indent is body too: under `:css`
+    // the pair was rendered into the <style> element (haml 6.4). With a line below, that line decides
+    // and the pair already lands outside; at the end of the document nothing does.
+    test('should leave the filter before writing the pair of a trailing blank target', () => {
+      const lines = [':css', '  a { }', '  '];
+      assert.deepStrictEqual(apply(lines, buildDisableComment(2, 'TrailingWhitespace', snapshotOfLines(lines), '\n')), [
+        ':css',
+        '  a { }',
+        '-# haml-lint:disable TrailingWhitespace',
+        '  ',
+        '-# haml-lint:enable TrailingWhitespace'
+      ]);
+
+      const nested = ['%div', '  :css', '    a { }', '    ', ''];
+      assert.deepStrictEqual(apply(nested, buildDisableComment(3, 'TrailingWhitespace', snapshotOfLines(nested), '\n')), [
+        '%div',
+        '  :css',
+        '    a { }',
+        '  -# haml-lint:disable TrailingWhitespace',
+        '    ',
+        '  -# haml-lint:enable TrailingWhitespace',
+        ''
+      ]);
+    });
+
+    test('should leave a continued script before writing the pair of a trailing blank target', () => {
+      const lines = ["= link_to 'x',", '    some_path', '    '];
+      assert.deepStrictEqual(apply(lines, buildDisableComment(2, 'TrailingWhitespace', snapshotOfLines(lines), '\n')), [
+        "= link_to 'x',",
+        '    some_path',
+        '-# haml-lint:disable TrailingWhitespace',
+        '    ',
+        '-# haml-lint:enable TrailingWhitespace'
+      ]);
+    });
+
     test('should keep children separated by a blank line inside the block', () => {
       const lines = ['%div', '  %a', '', '  %b', '%footer'];
       assert.deepStrictEqual(apply(lines, buildDisableComment(0, 'X', snapshotOfLines(lines), '\n')), [
