@@ -53,8 +53,9 @@ export class HamlFormattingEditProvider implements vscode.DocumentFormattingEdit
     const original = document.getText();
 
     // Single pass: with --stdin and --stderr but without --auto-correct-only, haml-lint puts the
-    // corrected source on stdout and the JSON report on stderr, so one Ruby process serves both
-    // format-on-save and the diagnostics that follow it.
+    // corrected source on stdout and the JSON report on stderr, so when there is nothing to correct -
+    // every save but the first of a tidy file - one Ruby process serves both format-on-save and the
+    // diagnostics that follow it.
     const result = await this.client.run(document, config, { mode: 'format-and-lint', formatter: mode }, token);
 
     if (!result.ok) {
@@ -88,14 +89,17 @@ export class HamlFormattingEditProvider implements vscode.DocumentFormattingEdit
     }
 
     const spec = buildFormatEdit(original, corrected, eol);
-    // The report reflects the corrected document, which is exactly what should be shown once the edit
-    // lands. buildFormatEdit returns null precisely when the corrected source restores to the original,
-    // so that is the text the report describes in that case.
-    this.publishReport(document, report, spec === null ? original : restoreEol(corrected, eol), config);
     if (spec === null) {
+      // buildFormatEdit returns null precisely when the corrected source restores to the original, so
+      // no line moves and the report is as true of the buffer as it is on the path above.
+      this.publishReport(document, report, original, config);
       return null;
     }
 
+    // Nothing is published for a run that corrected something: its report is not a lint of the
+    // corrected text, and that text is not in the buffer to map it onto until this edit is applied.
+    // The edit landing starts the lint instead - see DiagnosticsController.awaitedText.
+    this.diagnostics.expectEdit(document, restoreEol(corrected, eol));
     return vscode.TextEdit.replace(new vscode.Range(spec.start.line, spec.start.character, spec.end.line, spec.end.character), spec.newText);
   }
 

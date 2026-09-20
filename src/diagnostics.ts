@@ -50,12 +50,23 @@ export class DiagnosticsController implements vscode.Disposable {
    *
    * With the shipped defaults a save ran haml-lint twice: format-on-save runs `format-and-lint`, and
    * the onDidSaveTextDocument that follows runs `lint` over the text the first run already reported
-   * on. They cannot be coalesced - different mode, and the document version has moved on by then -
-   * but the answer is the same, and a Ruby boot is the entire cost of a run. Keyed on content rather
-   * than on the version, because the report the formatter produces describes the document as it will
-   * be *after* its edit lands, whose version cannot be known in advance.
+   * on. They cannot be coalesced, being different modes, but when the format pass had nothing to
+   * correct the answer is the same, and a Ruby boot is the entire cost of a run. Keyed on content rather
+   * than on the version, because content is what a report is true of: an undo back to the published
+   * text reuses it as well, under a version that was never linted.
    */
   private readonly publishedFor = new Map<string, string>();
+  /**
+   * The text a format edit is about to put into each document, as a digest.
+   *
+   * A format pass that corrected something publishes nothing. Its report is not a lint of the
+   * corrected text - runner.rb concatenates what the correcting pass recorded, at the lines those
+   * offenses had before the fix, with a second pass over the result - and whatever it says could only
+   * be mapped onto lines that are not in the buffer until VS Code applies the edit. So the formatter
+   * leaves the expected text here, and the change that produces it starts an ordinary lint. On a
+   * save that lint is the one onDidSaveTextDocument asks for a moment later, which joins it.
+   */
+  private readonly awaitedText = new Map<string, string>();
 
   constructor(
     private readonly client: LintRunner,
@@ -67,7 +78,7 @@ export class DiagnosticsController implements vscode.Disposable {
   }
 
   /**
-   * Called when a document is opened or saved.
+   * Called when a document is opened or saved, and when a format edit has landed in it.
    *
    * `force` is for the paths that invalidate what has already been concluded - a settings change, or
    * the user asking for a restart - since the reuse below is keyed on content, which a settings
@@ -92,6 +103,30 @@ export class DiagnosticsController implements vscode.Disposable {
       return;
     }
     this.detached('lint', this.lint(document, config, force));
+  }
+
+  /** Called by the formatter with the text its edit will produce, in place of publishing. */
+  expectEdit(document: vscode.TextDocument, text: string): void {
+    this.awaitedText.set(document.uri.toString(), digestOf(text));
+  }
+
+  /**
+   * Called on every content change, which is how a format edit landing is noticed: a command and a
+   * manual Format Document are followed by no save to hang this on.
+   *
+   * The first change decides. VS Code drops a formatting result when the buffer has moved on, so
+   * what arrives may be the user's typing instead, and under onSave that must not start a lint.
+   */
+  settle(document: vscode.TextDocument): void {
+    const key = document.uri.toString();
+    const awaited = this.awaitedText.get(key);
+    if (awaited === undefined) {
+      return;
+    }
+    this.awaitedText.delete(key);
+    if (awaited === digestOf(document.getText())) {
+      this.refreshNow(document);
+    }
   }
 
   /** Called on every keystroke; only acts when the user opted into onType. */
@@ -185,6 +220,7 @@ export class DiagnosticsController implements vscode.Disposable {
   private discard(document: vscode.TextDocument): void {
     const key = document.uri.toString();
     this.publishedFor.delete(key);
+    this.awaitedText.delete(key);
     // A run parked on the process runner's concurrency queue survives the cancel below unsettled;
     // left in the client's coalescing map it would swallow the first lint after a reopen, which
     // starts again at the version the dead run was keyed under.
@@ -290,6 +326,7 @@ export class DiagnosticsController implements vscode.Disposable {
     this.cancellations.clear();
     this.generations.clear();
     this.publishedFor.clear();
+    this.awaitedText.clear();
     this.collection.dispose();
   }
 }

@@ -10,6 +10,7 @@ import { MissingExecutableNotice } from '../../missingExecutableNotice';
 import type { HamlLintReport } from '../../types';
 import { config, INVOCATION, memento, stubLintRunner } from '../support/doubles';
 import { openView } from '../support/host';
+import { wait, waitFor } from '../support/timing';
 
 const ONE_OFFENSE: HamlLintReport = {
   offenses: [{ line: 1, severity: 'warning', message: 'Line is too long', linterName: 'LineLength' }]
@@ -58,8 +59,9 @@ suite('report reuse Test Suite', () => {
     controller.dispose();
   });
 
-  // The path that actually matters: the formatter already linted the corrected document, so the save
-  // that follows must not start a second process to learn the same thing.
+  // The path nearly every save takes: the format pass found nothing to correct, so its report is a
+  // lint of the text in the buffer, and the save that follows must not start a second process to
+  // learn the same thing.
   test('should not run again on save after the formatter published for the same text', async () => {
     const runner = stubLintRunner((mode) =>
       mode === 'lint'
@@ -82,6 +84,115 @@ suite('report reuse Test Suite', () => {
       'and the diagnostics must actually be on screen, not merely skipped'
     );
     controller.dispose();
+  });
+
+  // The report of a run that corrected something is not a lint of the corrected text. runner.rb
+  // concatenates what the correcting pass recorded - at the lines those offenses had before the fix,
+  // and marked corrected even when haml-lint then threw the correction away - with a second pass
+  // over the result. And whatever it says can only be mapped onto lines once they are in the buffer,
+  // which is after VS Code applies the edit this returns. So such a run publishes nothing: the edit
+  // landing starts an ordinary lint, which the save that follows joins rather than repeats.
+  suite('a format pass that corrects something', () => {
+    const REPORTED = '%p the only line left to report';
+    const BEFORE = `:ruby\n  a = 1\n\n\n  b = 2\n${REPORTED}\n`;
+    const AFTER = `:ruby\n${REPORTED}\n`;
+    /** What haml-lint 0.76.0 really answers for BEFORE: the fixed offenses at their old lines, then the rest. */
+    const CORRECTING_RUN: HamlLintReport = {
+      offenses: [
+        { line: 2, severity: 'warning', message: 'Lint/UselessAssignment', linterName: 'RuboCop' },
+        { line: 4, severity: 'warning', message: 'Layout/EmptyLines', linterName: 'RuboCop' },
+        { line: 2, severity: 'warning', message: 'Line is too long', linterName: 'LineLength' }
+      ]
+    };
+    const LINT_OF_AFTER: HamlLintReport = { offenses: [{ line: 2, severity: 'warning', message: 'Line is too long', linterName: 'LineLength' }] };
+
+    function hamlLintDiagnostics(document: vscode.TextDocument): vscode.Diagnostic[] {
+      return vscode.languages.getDiagnostics(document.uri).filter((diagnostic) => diagnostic.source === 'haml-lint');
+    }
+
+    async function apply(document: vscode.TextDocument, edit: vscode.TextEdit): Promise<void> {
+      const workspaceEdit = new vscode.WorkspaceEdit();
+      workspaceEdit.set(document.uri, [edit]);
+      assert.ok(await vscode.workspace.applyEdit(workspaceEdit), 'the edit must apply');
+    }
+
+    function fixture(): { runner: ReturnType<typeof stubLintRunner>; controller: DiagnosticsController; formatter: HamlFormattingEditProvider } {
+      const runner = stubLintRunner((mode) =>
+        mode === 'lint' ? { ok: true, outcome: { report: LINT_OF_AFTER } } : { ok: true, outcome: { report: CORRECTING_RUN, correctedSource: AFTER } }
+      );
+      const controller = new DiagnosticsController(runner, logger, () => config(), notice());
+      return { runner, controller, formatter: new HamlFormattingEditProvider(runner, capabilities(logger), controller, logger, () => config()) };
+    }
+
+    test('should publish nothing until the edit has landed, then lint what is in the buffer', async () => {
+      const { runner, controller, formatter } = fixture();
+      const document = await vscode.workspace.openTextDocument({ language: 'haml', content: BEFORE });
+
+      const edit = await formatter.computeEdit(document);
+      assert.ok(edit !== null, 'the corrected source differs, so there must be an edit');
+      assert.deepStrictEqual(hamlLintDiagnostics(document), [], 'the report describes text that is not in the buffer yet');
+
+      await apply(document, edit);
+      controller.settle(document);
+      await waitFor(() => hamlLintDiagnostics(document).length > 0, 'the lint of the corrected text', 5000, 10);
+
+      const ranges = hamlLintDiagnostics(document).map(({ range }) => [range.start.line, range.start.character, range.end.line, range.end.character]);
+      assert.deepStrictEqual(ranges, [[1, 0, 1, REPORTED.length]], 'only what is left, spanning the line as it now reads');
+      assert.deepStrictEqual(runner.modes, ['format-and-lint', 'lint']);
+      controller.dispose();
+    });
+
+    // The save that follows format-on-save asks for the same text again. While the landing edit's
+    // lint is still in flight HamlLintClient joins the two, which its own suite covers; once it has
+    // published, the save must find that report rather than start a third process.
+    test('should not lint again on the save that follows', async () => {
+      const { runner, controller, formatter } = fixture();
+      const document = await vscode.workspace.openTextDocument({ language: 'haml', content: BEFORE });
+
+      const edit = await formatter.computeEdit(document);
+      assert.ok(edit !== null);
+      await apply(document, edit);
+      controller.settle(document);
+      await waitFor(() => hamlLintDiagnostics(document).length > 0, 'the lint of the corrected text', 5000, 10);
+      await controller.lint(document, config());
+
+      assert.deepStrictEqual(runner.modes, ['format-and-lint', 'lint']);
+      controller.dispose();
+    });
+
+    // VS Code drops a formatting result when the buffer moved on, so the change that arrives may be
+    // the user's typing. Under onSave that must not start a lint.
+    test('should not lint when the change that arrives is not the awaited edit', async () => {
+      const { runner, controller, formatter } = fixture();
+      const document = await vscode.workspace.openTextDocument({ language: 'haml', content: BEFORE });
+
+      assert.ok((await formatter.computeEdit(document)) !== null);
+      await apply(document, vscode.TextEdit.insert(new vscode.Position(0, 0), '%p typed instead\n'));
+      controller.settle(document);
+      controller.settle(document);
+      await wait(50);
+
+      assert.deepStrictEqual(runner.modes, ['format-and-lint']);
+      controller.dispose();
+    });
+
+    test('should leave the panel alone when diagnostics are switched off', async () => {
+      const off = config({ lintRun: 'off' });
+      const runner = stubLintRunner(() => ({ ok: true, outcome: { report: CORRECTING_RUN, correctedSource: AFTER } }));
+      const controller = new DiagnosticsController(runner, logger, () => off, notice());
+      const formatter = new HamlFormattingEditProvider(runner, capabilities(logger), controller, logger, () => off);
+      const document = await vscode.workspace.openTextDocument({ language: 'haml', content: BEFORE });
+
+      const edit = await formatter.computeEdit(document);
+      assert.ok(edit !== null);
+      await apply(document, edit);
+      controller.settle(document);
+      await wait(50);
+
+      assert.deepStrictEqual(runner.modes, ['format-and-lint']);
+      assert.deepStrictEqual(hamlLintDiagnostics(document), []);
+      controller.dispose();
+    });
   });
 
   // The format pass gets a report for free from the same process, but "no diagnostics" has to mean no

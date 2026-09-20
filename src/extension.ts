@@ -168,6 +168,10 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     vscode.workspace.onDidChangeTextDocument((event) => {
       if (isHamlDocument(event.document)) {
+        // Also fires for a dirty-state flip with no content change, which cannot be an edit landing.
+        if (event.contentChanges.length > 0) {
+          diagnostics.settle(event.document);
+        }
         diagnostics.refreshDebounced(event.document);
       }
     }),
