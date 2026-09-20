@@ -87,6 +87,29 @@ suite('pure/attributePosition Test Suite', () => {
       assert.strictEqual(syntaxAt('%a(href=dat'), null);
     });
 
+    // Haml takes `%a(href= "/x")` and `%a(href = "/x")` (rendered to check), so whitespace after the
+    // `=` separates nothing yet: the value is still to come, and that is where the cursor is.
+    test('should stay in the value position across whitespace after an html-style =', () => {
+      assert.strictEqual(syntaxAt('%a(href= da'), null);
+      assert.strictEqual(syntaxAt('%a(href = da'), null);
+      assert.strictEqual(syntaxAt('%a(href=   da'), null);
+      assert.strictEqual(syntaxAt('%a(href= "da'), null);
+    });
+
+    test('should be back at a name once the spaced value has ended', () => {
+      assert.strictEqual(syntaxAt('%a(href= "/x" da'), 'htmlAttributes');
+      assert.strictEqual(syntaxAt('%a(href= x da'), 'htmlAttributes');
+    });
+
+    // Whitespace removal comes after the attribute lists. Haml renders `%a<(href="/x") t` as
+    // `<a>(href="/x") t</a>`, and a `{` or `[` there is text just the same.
+    test('should reject a bracket that follows whitespace removal', () => {
+      for (const prefix of ['%a<(da', '%a>(da', '%a<>{ da', '%a<[da', '.card>(da']) {
+        assert.strictEqual(syntaxAt(prefix), null, prefix);
+      }
+      assert.strictEqual(syntaxAt("%a{ id: 'a' }(da"), 'htmlAttributes', 'a second list straight after the first is still one');
+    });
+
     // Legacy hashrocket syntax: `=>` separates a value exactly the way `:` does.
     test('should reject a hashrocket value position', () => {
       assert.strictEqual(syntaxAt("%div{ 'data-url' => dat"), null);

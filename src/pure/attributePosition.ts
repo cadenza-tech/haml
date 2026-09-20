@@ -12,7 +12,7 @@
 // keystroke and a Haml line can hold an inline data URI.
 
 import type { AttributeSyntax } from '../types';
-import { findLiteralEnd, isNameCharacter, isSpaceCharacter, skipSpaces } from './characters';
+import { findLiteralEnd, isNameCharacter, isOpeningBracket, isSpaceCharacter, skipSpaces } from './characters';
 
 /** What a Haml line may open with and still be a tag. */
 const TAG_STARTS = new Set(['%', '.', '#']);
@@ -66,9 +66,18 @@ function scan(linePrefix: string): ScanResult | null {
 
   const stack: Frame[] = [];
   let openLiteralStart: number | null = null;
+  // An html-style `=` whose value has not started. Haml takes `href= "/x"` and `href = "/x"`, so the
+  // whitespace after it separates nothing yet. A flag rather than a look back over the spaces, which
+  // would be quadratic on a line that is mostly spaces.
+  let awaitingValue = false;
+  // Whitespace removal comes after the attribute lists: Haml renders `%a<(href="/x") t` with the
+  // parentheses as text, so no bracket that follows `<` or `>` on the header opens anything.
+  let sawWhitespaceRemoval = false;
 
   for (; index < linePrefix.length; index++) {
     const character = linePrefix[index] as string;
+    const stillAwaitingValue = awaitingValue;
+    awaitingValue = false;
 
     if (character === "'" || character === '"') {
       const end = findLiteralEnd(linePrefix, index);
@@ -89,6 +98,9 @@ function scan(linePrefix: string): ScanResult | null {
     }
 
     const top = stack[stack.length - 1];
+    if (top === undefined && sawWhitespaceRemoval && isOpeningBracket(character)) {
+      return null;
+    }
     if (character === '{') {
       stack.push({ kind: 'hash', ownerKey: top?.lastKey ?? null, sawValueSeparator: false, lastKey: null });
       continue;
@@ -113,6 +125,9 @@ function scan(linePrefix: string): ScanResult | null {
       if (isSpaceCharacter(character) || character === '=' || character === '/') {
         return null;
       }
+      if (character === '<' || character === '>') {
+        sawWhitespaceRemoval = true;
+      }
       continue;
     }
     if (character === ',') {
@@ -120,8 +135,13 @@ function scan(linePrefix: string): ScanResult | null {
       top.lastKey = null;
       continue;
     }
-    // HTML-style attributes are separated by whitespace rather than commas.
+    // HTML-style attributes are separated by whitespace rather than commas - except between an `=`
+    // and the value it is still waiting for.
     if (isSpaceCharacter(character) && top.kind === 'html') {
+      if (stillAwaitingValue) {
+        awaitingValue = true;
+        continue;
+      }
       top.sawValueSeparator = false;
       top.lastKey = null;
       continue;
@@ -138,6 +158,7 @@ function scan(linePrefix: string): ScanResult | null {
     if (character === '=') {
       if (top.kind === 'html') {
         top.sawValueSeparator = true;
+        awaitingValue = true;
         continue;
       }
       // `=>` is the hashrocket separator of a Ruby hash. A lone `=` in a Ruby frame belongs to a
