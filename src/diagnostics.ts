@@ -249,6 +249,10 @@ export class DiagnosticsController implements vscode.Disposable {
     const source = document.getText();
     if (force) {
       this.client.forget(document.uri);
+      // The digest was recorded under the rules that just changed, so it stops answering anything
+      // now - not only if this run goes on to publish. A forced run that ends stale, or with a report
+      // that cannot be parsed, replaces nothing, and the next save would reuse the old one for good.
+      this.publishedFor.delete(key);
     } else if (shouldReuseReport(this.publishedFor.get(key), source, force)) {
       // The diagnostics on screen were produced by haml-lint from exactly this text, under settings
       // that have not changed since - every path that changes them forces. Running again would spend

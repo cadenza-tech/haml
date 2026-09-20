@@ -303,6 +303,27 @@ suite('report reuse Test Suite', () => {
     controller.dispose();
   });
 
+  // A forced request exists because the rules changed, so the digest recorded under the old ones
+  // stops answering anything the moment it arrives - whether or not the forced run goes on to
+  // publish. An unparseable report keeps the old diagnostics on purpose; keeping their digest too
+  // would make every later save of the same text skip, with the panel still showing the old rules.
+  test('should run again after a forced run that published nothing', async () => {
+    let attempts = 0;
+    const runner = stubLintRunner(() => {
+      attempts++;
+      return attempts === 2 ? { ok: false, kind: 'failed', reason: 'unparseable-report' } : { ok: true, outcome: { report: ONE_OFFENSE } };
+    });
+    const controller = new DiagnosticsController(runner, logger, () => config(), notice());
+    const document = await openView('offenses.haml');
+
+    await controller.lint(document, config());
+    await controller.lint(document, config(), true);
+    await controller.lint(document, config());
+
+    assert.strictEqual(runner.modes.length, 3, 'the report published before the forced run must not be reused after it');
+    controller.dispose();
+  });
+
   // haml.lint.exclude has to keep a file out of the panel whichever run produced the report; the
   // formatter publishes through the same method the lint path uses.
   test('should not record a report published for an excluded document', async () => {
