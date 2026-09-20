@@ -96,7 +96,7 @@ suite('code action provider Test Suite', () => {
         actions.find((action) => action.kind?.value === FIX_ALL_KIND.value),
         undefined
       );
-      assert.strictEqual(actions.length, 1, 'the disable action costs nothing and is still offered');
+      assert.strictEqual(actions.length, 0, 'a quick fix is not a source.fixAll action, and VS Code would drop it');
     });
   });
 
@@ -110,6 +110,22 @@ suite('code action provider Test Suite', () => {
       assert.ok(quickFix !== undefined);
       assert.deepStrictEqual(quickFix.diagnostics, [diagnostic]);
       assert.ok(quickFix.edit !== undefined, 'the comment pair is a plain edit, so it is offered directly');
+    });
+
+    // codeActionsOnSave asks for source.fixAll over the whole document, with every diagnostic in it.
+    // Working out where each comment pair goes walks the lines above each one, and VS Code throws away
+    // whatever is not of the kind it asked for - so on every save that was work for nothing.
+    test('should be built only when quick fixes are wanted', async () => {
+      const diagnostics = [hamlLintDiagnostic(0, 'AltText')];
+      const provider = providerFor(fakeFormatter(null));
+      const kindsFor = async (only: vscode.CodeActionKind | undefined): Promise<string[]> =>
+        (await provider.provideCodeActions(document, range, context({ diagnostics, only }), noToken)).map((action) => action.kind?.value ?? '');
+      const quickFix = vscode.CodeActionKind.QuickFix.value;
+
+      assert.ok((await kindsFor(undefined)).includes(quickFix), 'the lightbulb asks for everything');
+      assert.ok((await kindsFor(vscode.CodeActionKind.QuickFix)).includes(quickFix));
+      assert.ok(!(await kindsFor(vscode.CodeActionKind.SourceFixAll)).includes(quickFix));
+      assert.ok(!(await kindsFor(vscode.CodeActionKind.Source)).includes(quickFix));
     });
   });
 

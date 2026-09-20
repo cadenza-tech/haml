@@ -45,8 +45,8 @@ suite('pure/lineRange Test Suite', () => {
       assert.deepStrictEqual(normalizeSelection(caret(1), document), { startLine: 1, endLine: 1 });
     });
 
-    // A cursor on a parent means the parent and its children, which is the same rule findBlockEnd
-    // exists for in disableComment.
+    // A cursor on a parent means the parent and its children, which is the same rule the disable
+    // quick fix follows when it places its comment pair.
     test('should take the whole block under a caret', () => {
       const document = snapshotOfLines(CARD);
       assert.deepStrictEqual(normalizeSelection(caret(1), document), { startLine: 1, endLine: 3 });

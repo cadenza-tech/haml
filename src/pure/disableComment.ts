@@ -11,7 +11,7 @@
 //
 // The marker therefore goes after the whole block, never after the single line.
 
-import { extendBlock, findBlockStart } from './blockStructure';
+import { findConstructEnd, findConstructStart } from './blockStructure';
 import { isBlankText } from './characters';
 import { DIAGNOSTIC_SOURCE } from './diagnosticMapper';
 import type { DocumentSnapshot, Eol } from './textModel';
@@ -20,22 +20,6 @@ export interface InsertionSpec {
   readonly line: number;
   readonly character: number;
   readonly text: string;
-}
-
-function indentWidth(text: string, firstNonWhitespaceCharacterIndex: number): number {
-  return isBlankText(text) ? Number.POSITIVE_INFINITY : firstNonWhitespaceCharacterIndex;
-}
-
-/**
- * Finds the last line belonging to the block that starts at `lineIndex`.
- *
- * Blank lines never end a block on their own - they are only excluded when nothing deeper follows -
- * so a stanza split by an empty line stays intact. An `- else` at the line's own indent belongs to it
- * too; src/pure/blockStructure.ts has the rule.
- */
-export function findBlockEnd(lineIndex: number, document: DocumentSnapshot): number {
-  const target = document.lineAt(lineIndex);
-  return extendBlock(lineIndex, indentWidth(target.text, target.firstNonWhitespaceCharacterIndex), document);
 }
 
 /**
@@ -69,11 +53,12 @@ function insertionIndent(lineIndex: number, document: DocumentSnapshot): string 
 
 /** Returns the two insertions that wrap a block in a haml-lint disable/enable pair. */
 export function buildDisableComment(lineIndex: number, linterName: string, document: DocumentSnapshot, eol: Eol): [InsertionSpec, InsertionSpec] {
-  // An offense on an `- else` is wrapped from the `- if` it belongs to: a comment directly above the
-  // `- else` would sit between the two, which Haml rejects.
-  const startLine = findBlockStart(lineIndex, document);
+  // The pair goes around whatever the offending line is a part of, never into it: an `- else` is
+  // wrapped from its `- if`, a line of a filter body from the filter's header, and a later line of an
+  // attribute list from the tag. src/pure/blockStructure.ts has what each of those breaks otherwise.
+  const startLine = findConstructStart(lineIndex, document);
   const indent = insertionIndent(startLine, document);
-  const blockEnd = findBlockEnd(startLine, document);
+  const blockEnd = findConstructEnd(startLine, document);
 
   const disable: InsertionSpec = {
     line: startLine,

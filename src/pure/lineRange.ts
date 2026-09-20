@@ -1,6 +1,6 @@
 // Selection normalization and indentation arithmetic, shared by the selection refactorings.
 //
-// The block rule is the one disableComment's findBlockEnd uses, from src/pure/blockStructure.ts, but
+// The block rule is the one the disable quick fix uses, from src/pure/blockStructure.ts, but
 // anchored to the selection's shallowest indent rather than to one line.
 
 import { extendBlock, findBlockStart } from './blockStructure';
@@ -43,7 +43,7 @@ function sharedPrefix(left: string, right: string): string {
  *
  * It extends past the end while lines are deeper than the selection's *shallowest* indent, not just
  * past the last selected line's own block. A selection covering two same-depth siblings can end in
- * the middle of the second one, and asking findBlockEnd about any single line would leave that
+ * the middle of the second one, and asking for the block of any single line would leave that
  * sibling's remaining children behind. Everything up to the next line at or above the shallowest
  * indent belongs to something selected.
  */
@@ -82,7 +82,7 @@ export function normalizeSelection(selection: SelectionInput, document: Document
     startLine = opener;
     shallowestIndent = Math.min(shallowestIndent, document.lineAt(opener).firstNonWhitespaceCharacterIndex);
   }
-  // Blank lines defer to what follows them, the way findBlockEnd reads a block: a stanza split by
+  // Blank lines defer to what follows them, the way extendBlock reads a block: a stanza split by
   // an empty line stays intact, and trailing blanks are not dragged in.
   return { startLine, endLine: extendBlock(endLine, shallowestIndent, document) };
 }
