@@ -22,7 +22,7 @@
       "action": { "indent": "indent" }
     },
     {
-      "beforeText": "^\\s*[%.#][\\w.#:-]*(\\{.*\\}|\\(.*\\)|\\[.*\\])*[<>]*\\s*$",
+      "beforeText": "^\\s*(?!%(?:area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)(?![\\w:-]))[%.#][\\w.#:-]*([{(\\[].*[})\\]])?[<>]*\\s*$",
       "action": { "indent": "indent" }
     },
     {
