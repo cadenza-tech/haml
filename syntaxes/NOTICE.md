@@ -39,6 +39,19 @@ where the derived work lives in the published extension.
   open, `rubyline`'s unanchored `(=|-|~)` matched hyphens inside ordinary words. The block-argument
   group was also `( \|[.*]+\|)?`, where `[.*]` is a character class of a literal `.` and `*` rather
   than "any characters", so `do |item|` never matched; it is now `(\s*\|[^|]*\|)?`.
+- Two ways were left for `rubyline` to stay open one line too long, so that the line *after* the
+  construct was tokenized as Ruby. Upstream's inner pattern `(\||,|<|do|\{)\s*(\#.*)?$\n*` consumed
+  the newline for every one of its alternatives, and once the newline is gone no `$`-anchored `end`
+  can match on that line. After `- foo do # comment` that swallowed the line below the block opener;
+  the `end` now takes the trailing comment itself. After a pipe block continued from a tag
+  (`%p= foo |`), which `rubyline_pipe` cannot cover because it is anchored at the top level, the rule
+  only closed at the end of the first line *without* a pipe. The two real continuations are now
+  nested rules of their own - a trailing `,` closes on the first line without one, a trailing ` |`
+  closes before the first line without one - and `rubyline` itself closes at any line start, which
+  it can no longer legitimately be open at. The tag rule around it does the same (`(?!\G)^`, so that
+  a `.class` line, whose begin matches nothing, is not closed where it opened): its `end` was a
+  lookahead that a following `-#` or `/` line does not satisfy, so such a comment was read as more of
+  the tag and its nested lines as live Haml.
 - The `end` of the `:sass`, `:styles`/`:style` and `:plain` filters was `^(?=\1\s+|$\n*)`, a
   positive lookahead where a negative one was intended. The region closed on the first line that was
   indented under the filter, which is the first line of its body, so those bodies were never scoped.

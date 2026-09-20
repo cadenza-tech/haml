@@ -17,3 +17,19 @@
 -# A single line must not swallow what follows it.
 = simple_helper
 %p after-simple
+-# A pipe continued from a tag ends before the first line without one, like the bare form above.
+%p= link_to "Add to cart",       |
+    :url => { :action => "add" } |
+%p after-tag-pipe
+-# The tag itself must be over by then too, or what follows it is read as more of the tag.
+%p= link_to "Add to cart",       |
+    :url => { :action => "add" } |
+-# a comment, with
+  %b everything under it
+%p after-tag-pipe-comment
+-# A comment after a block opener must not keep the line open.
+- items.each do |item| # every one
+  %li= item
+- capture do # nothing else
+  %p captured
+%p after-comment

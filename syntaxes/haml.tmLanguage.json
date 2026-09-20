@@ -96,7 +96,7 @@
     },
     {
       "begin": "^\\s*(?:((%)([-\\w:]+))|(?=\\.|#))",
-      "end": "$|(?!\\.|#|\\{|\\(|\\[|&amp;|=|-|~|!=|&=|/)",
+      "end": "$|(?!\\.|#|\\{|\\(|\\[|&amp;|=|-|~|!=|&=|/)|(?!\\G)^",
       "captures": {
         "1": {
           "name": "meta.tag.haml"
@@ -616,13 +616,16 @@
     "rubyline": {
       "begin": "(&amp|!)?(=|-|~)",
       "contentName": "source.ruby.embedded.haml",
-      "end": "((do|\\{)(\\s*\\|[^|]*\\|)?)[ \\t]*$|(?<=[^,\\s])[ \\t]*$",
+      "end": "(((?<!\\w)do|\\{)(\\s*\\|[^|]*\\|)?)[ \\t]*(#.*)?$|(?<=[^,\\s])[ \\t]*$|^",
       "endCaptures": {
         "1": {
           "name": "source.ruby.embedded.html"
         },
         "2": {
           "name": "keyword.control.ruby.start-block"
+        },
+        "4": {
+          "name": "comment.line.number-sign.ruby"
         }
       },
       "name": "meta.line.ruby.haml",
@@ -664,11 +667,55 @@
           }
         },
         {
-          "match": "(\\||,|<|do|\\{)\\s*(\\#.*)?$\\n*",
-          "name": "source.ruby",
+          "begin": "(?<=\\s)(\\|)[ \\t]*$\\n?",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.separator.continuation.haml"
+            }
+          },
+          "end": "^(?!.*\\s\\|[ \\t]*$)",
           "patterns": [
             {
-              "include": "#rubyline"
+              "include": "#continuation"
+            },
+            {
+              "comment": "Hack to let ruby comments work in this context properly",
+              "match": "#.*$",
+              "name": "comment.line.number-sign.ruby"
+            },
+            {
+              "include": "source.ruby"
+            }
+          ]
+        },
+        {
+          "begin": ",[ \\t]*(#.*)?$\\n?",
+          "beginCaptures": {
+            "0": {
+              "name": "source.ruby"
+            },
+            "1": {
+              "name": "comment.line.number-sign.ruby"
+            }
+          },
+          "end": "(?<=[^,\\s])[ \\t]*$",
+          "patterns": [
+            {
+              "match": ",[ \\t]*(#.*)?$\\n?",
+              "name": "source.ruby",
+              "captures": {
+                "1": {
+                  "name": "comment.line.number-sign.ruby"
+                }
+              }
+            },
+            {
+              "comment": "Hack to let ruby comments work in this context properly",
+              "match": "#.*$",
+              "name": "comment.line.number-sign.ruby"
+            },
+            {
+              "include": "source.ruby"
             }
           ]
         },
