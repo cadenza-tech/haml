@@ -1,6 +1,6 @@
 {
   "$comment": "Test-only stub. vscode-textmate drops a whole pattern when its include target is not registered, so the vendored grammar's filter regions would be untestable without these.",
-  "scopeName": "source.scss",
-  "name": "source.scss",
+  "scopeName": "source.css.scss",
+  "name": "source.css.scss",
   "patterns": []
 }

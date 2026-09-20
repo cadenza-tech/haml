@@ -20,6 +20,14 @@ where the derived work lives in the published extension.
   VS Code's php grammar in any supported version; vscode-textmate silently drops a rule whose include
   target is missing, so the whole filter region went unscoped. It now includes `text.html.php`
   itself, the way the other filters include their grammars' root scopes.
+- The same defect hid three more filters. `:scss` included `source.scss`, but VS Code's SCSS grammar
+  is `source.css.scss`; `:plain` included `text.plain`, which no grammar registers; and `:sass`
+  included `source.sass`, which only a third-party extension provides. `:scss` now includes
+  `source.css.scss`, `:plain` includes `#interpolated_ruby` and nothing external, and the `:sass`
+  rule includes `#interpolated_ruby` next to `source.sass` so that it survives without a Sass
+  grammar - the region is scoped either way, and highlighted inside when one is installed. The two
+  `:style`/`:styles` rules that also name `source.sass` are left to be dropped without it, because
+  that is what lets `:style` fall through to the CSS rule.
 - Multiline Ruby was fixed (upstream issue #9). The `rubyline` rule's `end` was
   `((do|\{)( \|[.*]+\|)?)$|$|^(?!.*\|\s*)$\n?`: the bare `$` in the middle matches at every line
   ending, so the region always closed after one line and the third alternative — the one meant to

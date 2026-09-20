@@ -155,6 +155,21 @@ suite('package.json manifest Test Suite', () => {
         assert.ok(registered.has(grammar.scopeName), `${grammar.scopeName} is contributed but has no entry in grammar-test.config.json`);
       }
     });
+
+    // The other direction of the same trap. The harness may only stub scopes that stock VS Code
+    // registers: a stub for anything else keeps a rule alive in the snapshots that every real editor
+    // drops, which is how `:scss` (VS Code's scope is source.css.scss), `:plain` and `:sass` went
+    // unhighlighted while their snapshots stayed green. A scope named here is a claim that was checked
+    // against the built-in extensions; source.sass is absent because only a third-party extension has it.
+    test('should stub only the scopes stock VS Code registers', () => {
+      const stock = ['source.coffee', 'source.css', 'source.css.scss', 'source.js', 'source.ruby', 'text.html.markdown', 'text.html.php'];
+      const harness = readJson('syntaxes', 'fixtures', 'grammar-test.config.json') as {
+        contributes: { grammars: { scopeName: string }[] };
+      };
+      const contributed = new Set(manifest.contributes.grammars.map((grammar: { scopeName: string }) => grammar.scopeName));
+      const stubbed = harness.contributes.grammars.map((grammar) => grammar.scopeName).filter((scope) => !contributed.has(scope));
+      assert.deepStrictEqual(stubbed.sort(), stock);
+    });
   });
 
   // Replaces the inline node -e in .github/workflows/lint.yml, which hardcoded the version string.

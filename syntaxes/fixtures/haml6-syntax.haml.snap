@@ -208,11 +208,12 @@
 >        # Heading
 #^^^^^^^^^^^^^^^^^^ text.haml meta.embedded.markdown
 >      :sass
-#^^^^^^^^^^^ text.haml source.sass.embedded.filter.haml
+#^^^^^^ text.haml source.embedded.filter.sass
+#      ^^^^^ text.haml source.embedded.filter.sass keyword.control.filter.haml
 >        .a
-#^^^^^^^^^^^ text.haml source.sass.embedded.filter.haml
+#^^^^^^^^^^^ text.haml source.embedded.filter.sass
 >          color: red
-#^^^^^^^^^^^^^^^^^^^^^ text.haml source.sass.embedded.filter.haml
+#^^^^^^^^^^^^^^^^^^^^^ text.haml source.embedded.filter.sass
 >      :scss
 #^^^^^^ text.haml meta.embedded.scss
 #      ^^^^^ text.haml meta.embedded.scss entity.name.tag.haml

@@ -262,7 +262,7 @@
       "name": "text.plain.embedded.filter.haml",
       "patterns": [
         {
-          "include": "text.plain"
+          "include": "#interpolated_ruby"
         }
       ]
     },
@@ -293,6 +293,9 @@
       "patterns": [
         {
           "include": "source.sass"
+        },
+        {
+          "include": "#interpolated_ruby"
         }
       ]
     },
@@ -312,7 +315,7 @@
       "name": "text.plain.embedded.filter.haml",
       "patterns": [
         {
-          "include": "text.plain"
+          "include": "#interpolated_ruby"
         }
       ]
     },
@@ -407,7 +410,7 @@
       },
       "patterns": [
         {
-          "include": "source.scss"
+          "include": "source.css.scss"
         }
       ]
     },
