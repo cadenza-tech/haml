@@ -43,8 +43,16 @@ export class DiagnosticsController implements vscode.Disposable {
    * silently produce no diagnostics at all. Only a genuinely superseded run is cancelled.
    */
   private readonly cancellations = new Map<string, { version: number; source: vscode.CancellationTokenSource }>();
-  /** Guards against a killed process resolving after a newer request already published. */
+  /**
+   * Guards against a killed process resolving after a newer request already published.
+   *
+   * Numbered from one counter for all documents, never per document: discard() drops a document's
+   * entry while the document stays open - lint.run switching off, a language-mode flip - and a count
+   * restarted at 1 would hand the next lint the very number the abandoned run still holds. That run
+   * would then pass the staleness check when it finally drains and clear what the newer one published.
+   */
   private readonly generations = new Map<string, number>();
+  private lastGeneration = 0;
   /**
    * The text each document's published diagnostics were produced from.
    *
@@ -260,7 +268,8 @@ export class DiagnosticsController implements vscode.Disposable {
       return;
     }
 
-    const generation = (this.generations.get(key) ?? 0) + 1;
+    this.lastGeneration++;
+    const generation = this.lastGeneration;
     this.generations.set(key, generation);
 
     const version = document.version;
