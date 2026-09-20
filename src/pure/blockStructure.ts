@@ -93,8 +93,9 @@ export function findBlockStart(lineIndex: number, document: DocumentSnapshot): n
 // the lines of an attribute list or of a continued script it is a syntax error. Around the whole
 // construct it is valid and still silences the offense (checked with haml-lint 0.76.0).
 //
-// Only the disable quick fix uses what follows. The selection refactorings keep to indentation and
-// the mid-block keywords, and README lists filters and multi-line Ruby as their known limitation.
+// The disable quick fix uses what follows, and the snippet provider its cheap reading,
+// hasConsumingAncestor. The selection refactorings keep to indentation and the mid-block keywords,
+// and README lists filters and multi-line Ruby as their known limitation.
 
 const FILTER_HEADER = /^[ \t]*:[A-Za-z][\w-]*[ \t]*$/;
 /** `-#` is a comment and `==` interpolated text; neither is continued by a comma. */
@@ -222,6 +223,52 @@ function filterHeaderAbove(lineIndex: number, document: DocumentSnapshot): numbe
     }
   }
   return header;
+}
+
+/** `-#` takes every deeper line as more of the comment, with or without text of its own. */
+const SILENT_COMMENT = /^[ \t]*-#/;
+
+/**
+ * Whether the tag on `lineIndex` opens an attribute list that nothing closes within reach - which is
+ * what every list looks like while it is being typed. constructExtent reads such a line as ending
+ * where it stands, the safe answer for a comment about to be written; for a suggestion it is not.
+ */
+function leavesListOpen(lineIndex: number, document: DocumentSnapshot): boolean {
+  const text = document.lineAt(lineIndex).text;
+  const head = SCRIPT_START.test(text) ? null : TAG_HEAD.exec(text);
+  return head !== null && skipAttributeLists(lineIndex, head[0].length, document) === null;
+}
+
+/**
+ * Whether some line above `lineIndex` takes it for itself, judged from indentation alone: the body of
+ * a filter or of a `-#` comment, or a later line of something a shallower line opens.
+ *
+ * The cheap reading, for a caller that runs on a keystroke and for whom a wrong answer costs a
+ * suggestion: it climbs only the lines indented shallower, so a construct whose later lines sit at
+ * the asked line's own indent or shallower escapes it. findConstructStart is the one to ask when the
+ * answer decides what is written into the document.
+ *
+ * Each of those lines is read as the construct it opens, not on its own: the head of a Rails form -
+ * `= form_with model: @user,` - is unfinished when read alone, but only the lines that finish it are
+ * its own, and what follows them is an ordinary block. `/` is not on the list at all: Haml parses
+ * what is nested under an HTML comment, and a `- if` there runs (rendered with haml 6.4 to check).
+ */
+export function hasConsumingAncestor(lineIndex: number, document: DocumentSnapshot): boolean {
+  let indent = document.lineAt(lineIndex).firstNonWhitespaceCharacterIndex;
+  for (let index = lineIndex - 1; index >= 0 && indent > 0; index--) {
+    const line = document.lineAt(index);
+    if (isBlankText(line.text) || line.firstNonWhitespaceCharacterIndex >= indent) {
+      continue;
+    }
+    if (FILTER_HEADER.test(line.text) || SILENT_COMMENT.test(line.text) || constructExtent(index, document) >= lineIndex) {
+      return true;
+    }
+    if (lineIndex - index <= MAX_CONSTRUCT_LINES && leavesListOpen(index, document)) {
+      return true;
+    }
+    indent = line.firstNonWhitespaceCharacterIndex;
+  }
+  return false;
 }
 
 /**

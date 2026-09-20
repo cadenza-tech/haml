@@ -1,17 +1,23 @@
-// Offers the Rails view helper snippets. VS Code glue only; every decision is made in src/pure.
+// Offers the snippets that open with a Haml script marker: the control-flow set and the Rails view
+// helpers. They come from a provider rather than from snippets/haml.code-snippets because only a
+// provider can replace the marker the user has already typed. VS Code glue only; every decision is
+// made in src/pure.
 
 import * as path from 'node:path';
 import * as vscode from 'vscode';
+import { snapshotOf } from './documentSnapshot';
 import { hasLocalPath } from './hamlDocuments';
 import { HAML_LANGUAGE_ID } from './hamlLint/eligibility';
+import { hasConsumingAncestor } from './pure/blockStructure';
 import { type CompletionWord, computeCompletionWord, computeReplaceLength, filterTextFor } from './pure/completionWord';
+import { controlSnippetsFor } from './pure/controlSnippets';
 import type { FsDeps } from './pure/fsWalk';
 import { detectRails } from './pure/railsDetection';
 import { RAILS_SNIPPETS, shouldOfferRailsSnippets } from './pure/railsSnippets';
-import type { HamlConfig, RailsSnippet } from './types';
+import type { HamlConfig, ProvidedSnippet } from './types';
 
 interface PreparedSnippet {
-  readonly snippet: RailsSnippet;
+  readonly snippet: ProvidedSnippet;
   readonly insertText: vscode.SnippetString;
 }
 
@@ -27,9 +33,9 @@ const RAILS_ITEMS: readonly PreparedSnippet[] = RAILS_SNIPPETS.map((snippet) => 
   insertText: new vscode.SnippetString(snippet.body)
 }));
 
-class RailsSnippetItem extends vscode.CompletionItem {
+class ProvidedSnippetItem extends vscode.CompletionItem {
   constructor(
-    readonly snippet: RailsSnippet,
+    readonly snippet: ProvidedSnippet,
     insertText: vscode.SnippetString
   ) {
     super(snippet.prefix, vscode.CompletionItemKind.Snippet);
@@ -38,13 +44,13 @@ class RailsSnippetItem extends vscode.CompletionItem {
   }
 }
 
-function buildItem(prepared: PreparedSnippet, word: CompletionWord, position: vscode.Position): RailsSnippetItem | null {
+function buildItem(prepared: PreparedSnippet, word: CompletionWord, position: vscode.Position): ProvidedSnippetItem | null {
   const { snippet, insertText } = prepared;
   const length = computeReplaceLength(word, snippet.body);
   if (length === null) {
     return null;
   }
-  const item = new RailsSnippetItem(snippet, insertText);
+  const item = new ProvidedSnippetItem(snippet, insertText);
   item.range = new vscode.Range(position.translate(0, -length), position);
   item.filterText = filterTextFor(word, length, snippet.prefix);
   return item;
@@ -85,7 +91,7 @@ export class RailsDetectionCache {
   }
 }
 
-export class RailsSnippetCompletionProvider implements vscode.CompletionItemProvider {
+export class SnippetCompletionProvider implements vscode.CompletionItemProvider {
   constructor(
     private readonly rails: RailsDetectionCache,
     private readonly getConfig: (resource: vscode.Uri) => HamlConfig
@@ -93,17 +99,42 @@ export class RailsSnippetCompletionProvider implements vscode.CompletionItemProv
 
   provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[] | undefined {
     // The cheap string test comes first: most cursor positions in a Haml file are plain text,
-    // attribute hashes or class shorthand, and none of those reach the filesystem check.
-    const word = computeCompletionWord(document.lineAt(position.line).text.slice(0, position.character));
+    // attribute hashes or class shorthand, and none of those reach the checks below.
+    const linePrefix = document.lineAt(position.line).text.slice(0, position.character);
+    const word = computeCompletionWord(linePrefix);
     if (word === null) {
       return undefined;
     }
+    const items = [...this.controlItems(document, position, linePrefix, word), ...this.railsItems(document, position, word)];
+    return items.length === 0 ? undefined : items;
+  }
+
+  /** Haml's own, so neither haml.snippets.rails nor the kind of workspace has any say in them. */
+  private controlItems(document: vscode.TextDocument, position: vscode.Position, linePrefix: string, word: CompletionWord): ProvidedSnippetItem[] {
+    const candidates = controlSnippetsFor(linePrefix.slice(linePrefix.length - word.identifierLength));
+    // Read only once something could be offered, because it climbs the document: inside a filter
+    // `if` is JavaScript or Markdown, and `- if condition` has no business there. The contributed
+    // snippets stayed out of a filter body for free, VS Code reading it as the embedded language; a
+    // provider is asked by the document's language wherever the cursor is.
+    if (candidates.length === 0 || hasConsumingAncestor(position.line, snapshotOf(document))) {
+      return [];
+    }
+    const items: ProvidedSnippetItem[] = [];
+    for (const snippet of candidates) {
+      const item = buildItem({ snippet, insertText: new vscode.SnippetString(snippet.body) }, word, position);
+      if (item !== null) {
+        items.push(item);
+      }
+    }
+    return items;
+  }
+
+  private railsItems(document: vscode.TextDocument, position: vscode.Position, word: CompletionWord): ProvidedSnippetItem[] {
     const config = this.getConfig(document.uri);
     if (!shouldOfferRailsSnippets(config.snippetsRails, () => this.rails.isRails(document))) {
-      return undefined;
+      return [];
     }
-
-    const items: RailsSnippetItem[] = [];
+    const items: ProvidedSnippetItem[] = [];
     for (const prepared of RAILS_ITEMS) {
       const item = buildItem(prepared, word, position);
       if (item !== null) {
@@ -113,9 +144,9 @@ export class RailsSnippetCompletionProvider implements vscode.CompletionItemProv
     return items;
   }
 
-  /** Kept out of provideCompletionItems so 239 rendered bodies are not serialised on every keystroke. */
+  /** Kept out of provideCompletionItems so hundreds of rendered bodies are not serialised on every keystroke. */
   resolveCompletionItem(item: vscode.CompletionItem): vscode.CompletionItem {
-    if (item instanceof RailsSnippetItem) {
+    if (item instanceof ProvidedSnippetItem) {
       item.documentation = new vscode.MarkdownString().appendCodeblock(item.snippet.body, HAML_LANGUAGE_ID);
     }
     return item;

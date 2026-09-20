@@ -1,4 +1,5 @@
-// Works out what a Rails snippet completion should replace, and whether it belongs there at all.
+// Works out what a snippet that opens with a Haml script marker - a Rails view helper, a control-flow
+// one - should replace, and whether it belongs there at all.
 //
 // Three things go wrong without this.
 //
@@ -148,7 +149,7 @@ function marker(head: string, from: number, atLineStart: boolean): Pick<Completi
   return { marker: text, markerLength: text.length, markerAtLineStart: atLineStart };
 }
 
-/** Returns null wherever a Rails helper cannot go. */
+/** Returns null wherever a line of Ruby cannot start. */
 export function computeCompletionWord(linePrefix: string): CompletionWord | null {
   const length = identifierLength(linePrefix);
   if (length === 0) {

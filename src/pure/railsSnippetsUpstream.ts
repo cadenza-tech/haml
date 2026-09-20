@@ -5,7 +5,7 @@
 // See syntaxes/NOTICE.md for the licence and the list of modifications.
 //
 // Bodies are verbatim apart from the repairs below. The 221 entries here are the upstream 228
-// minus the seven whose prefix already exists in snippets/haml.code-snippets (if, else, elsif,
+// minus the seven whose prefix already exists in src/pure/controlSnippets.ts (if, else, elsif,
 // unless, each, yield, content_for), so the two sets never produce duplicate suggestions.
 //
 // Seven upstream bodies were repaired. VS Code's snippet parser rejects two outright and inserts

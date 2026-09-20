@@ -6,7 +6,7 @@ import { CapabilityCache } from './capabilities';
 import { HamlLintClient } from './client';
 import { HamlCodeActionProvider } from './codeActions';
 import { registerCommands } from './commands';
-import { RailsDetectionCache, RailsSnippetCompletionProvider } from './completions';
+import { RailsDetectionCache, SnippetCompletionProvider } from './completions';
 import { CONFIG_SECTION, loadConfig } from './config';
 import { DiagnosticsController } from './diagnostics';
 import { HamlFormattingEditProvider } from './formatter';
@@ -100,7 +100,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // Snippets are declared as working everywhere, including virtual and untrusted workspaces, so
   // this one selector is broader than HAML_SELECTOR: no process is ever started for a completion.
   const railsCache = new RailsDetectionCache(fsDeps);
-  const completions = new RailsSnippetCompletionProvider(railsCache, getConfig);
+  const completions = new SnippetCompletionProvider(railsCache, getConfig);
   // Partial navigation reads file names off the disk, so it needs the narrower selector even though
   // it starts no process: HAML_SELECTOR is the line between "resolves a real path" and "does not".
   const partialDefinitions = new PartialDefinitionProvider(fsDeps);

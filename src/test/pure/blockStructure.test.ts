@@ -1,5 +1,5 @@
 import * as assert from 'node:assert';
-import { extendBlock, findBlockStart, findConstructEnd, findConstructStart } from '../../pure/blockStructure';
+import { extendBlock, findBlockStart, findConstructEnd, findConstructStart, hasConsumingAncestor } from '../../pure/blockStructure';
 import { snapshotOfLines } from '../support/snapshot';
 
 suite('pure/blockStructure Test Suite', () => {
@@ -144,6 +144,53 @@ suite('pure/blockStructure Test Suite', () => {
       const document = snapshotOfLines(['- if a', '  %p x', '- elsif b,', '    c', '  %p y', '%p after']);
       assert.strictEqual(findConstructStart(3, document), 0);
       assert.strictEqual(findConstructEnd(0, document), 4);
+    });
+  });
+
+  suite('hasConsumingAncestor', () => {
+    test('should find the filter or the silent comment a line is the body of', () => {
+      assert.strictEqual(hasConsumingAncestor(1, snapshotOfLines([':javascript', '  if'])), true);
+      assert.strictEqual(hasConsumingAncestor(2, snapshotOfLines([':ruby', '  x = 1', '    if'])), true);
+      assert.strictEqual(hasConsumingAncestor(3, snapshotOfLines(['%div', '  :javascript', '', '    if'])), true);
+      assert.strictEqual(hasConsumingAncestor(1, snapshotOfLines(['-#', '  if'])), true);
+      assert.strictEqual(hasConsumingAncestor(2, snapshotOfLines(['%div', '  -# a note that goes on', '    if'])), true);
+    });
+
+    test('should find nothing above a line that is Haml of its own', () => {
+      assert.strictEqual(hasConsumingAncestor(0, snapshotOfLines(['if'])), false);
+      assert.strictEqual(hasConsumingAncestor(2, snapshotOfLines(['%div', '  - if a', '    if'])), false);
+      assert.strictEqual(hasConsumingAncestor(2, snapshotOfLines([':javascript', '  a();', 'if'])), false);
+      assert.strictEqual(hasConsumingAncestor(2, snapshotOfLines(['-# a note', '%div', '  if'])), false);
+    });
+
+    // Haml parses what is nested under an HTML comment: `/` then `  - if true` then `    %p x` renders
+    // `<!--\n<p>x</p>\n-->` (haml 6.4), so a line there is as much Haml as any other.
+    test('should not count an html comment, whose body Haml parses', () => {
+      assert.strictEqual(hasConsumingAncestor(1, snapshotOfLines(['/', '  if'])), false);
+      assert.strictEqual(hasConsumingAncestor(1, snapshotOfLines(['/[if IE]', '  if'])), false);
+    });
+
+    // A later line of something a shallower line opens is the rest of that statement, not a line.
+    test('should find the statement a deeper line continues', () => {
+      assert.strictEqual(hasConsumingAncestor(1, snapshotOfLines(['= form_with model: @user,', '    lo'])), true);
+      assert.strictEqual(hasConsumingAncestor(1, snapshotOfLines(["%a{ href: '/x',", '    cl', "    id: 'y' }"])), true);
+    });
+
+    // Nothing closes a list while it is being typed, which is exactly when the question is asked.
+    test('should find an attribute list that is still open', () => {
+      assert.strictEqual(hasConsumingAncestor(1, snapshotOfLines(["%a{ href: '/x',", '    cl'])), true);
+      assert.strictEqual(hasConsumingAncestor(1, snapshotOfLines(["%a(href='/x'", '    cl'])), true);
+      assert.strictEqual(hasConsumingAncestor(2, snapshotOfLines(['%div', "  %a{ href: '/x' }", '    if'])), false);
+    });
+
+    // The head of a Rails form is unfinished when read alone, which is not the same thing as taking
+    // its children: read to its end it opens an ordinary block, and only the lines that finish it
+    // are its own.
+    test('should read an ancestor as the whole statement it opens', () => {
+      const form = ['= form_with model: @user,', '    local: true do |f|', '  if'];
+      assert.strictEqual(hasConsumingAncestor(2, snapshotOfLines(form)), false);
+      const tag = ["%section{ id: 'a',", "    class: 'b' }", '  if'];
+      assert.strictEqual(hasConsumingAncestor(2, snapshotOfLines(tag)), false);
     });
   });
 });

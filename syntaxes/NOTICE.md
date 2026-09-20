@@ -2,11 +2,11 @@
 
 ## Haml TextMate grammar, language configuration, and snippets
 
-`syntaxes/haml.tmLanguage.json`, `language-configuration.json`, `snippets/haml.code-snippets`, and
+`syntaxes/haml.tmLanguage.json`, `language-configuration.json`, `src/pure/controlSnippets.ts`, and
 `src/pure/railsSnippetsUpstream.ts` are derived from **haml-vscode** by Karuna Murti.
 
-`src/pure/railsSnippetsUpstream.ts` is not shipped as a file: esbuild bundles it into
-`dist/extension.js`, which is where the derived work lives in the published extension.
+Neither TypeScript file is shipped as one: esbuild bundles both into `dist/extension.js`, which is
+where the derived work lives in the published extension.
 
 - Upstream: https://github.com/karuna/haml-vscode
 - Vendored commit: `504875f60bcd474f17762b2daf97680476135f79` (master, 2022-07-03)
@@ -57,9 +57,13 @@
   It has been replaced with `onEnterRules`.
 - `snippets/snippets.json`: the upstream file contains 228 snippets, most of which are Rails view
   helpers (`link_to`, `url_for`, `audio_tag`, …). They are split across two places here.
-  - `snippets/haml.code-snippets` keeps the 7 Haml structural snippets (`if`, `else`, `elsif`,
-    `unless`, `each`, `yield`, `content_for`) and adds Haml constructs upstream did not cover —
-    filters, doctypes, comments, `case`/`when`, `begin`/`rescue`, and `haml-lint:disable` blocks.
+  - `src/pure/controlSnippets.ts` keeps the 7 Haml structural snippets (`if`, `else`, `elsif`,
+    `unless`, `each`, `yield`, `content_for`) and adds control flow upstream did not cover —
+    `case`/`when`, `while`, `until`, `begin`/`rescue` and blocks. They go through the completion
+    provider, ungated, because only a provider can replace the `-` or `=` a body opens with when
+    the user has already typed it. `snippets/haml.code-snippets` holds nothing of upstream's any
+    more: filters, doctypes, comments and `haml-lint:disable` blocks are original to this
+    repository.
   - `src/pure/railsSnippetsUpstream.ts` holds the remaining 221. Prefixes and bodies are verbatim
     apart from the container, which changed from a JSON object keyed by name to a TypeScript array,
     and seven repaired bodies. `fields_for` had `${:record_object}` with no tab stop number and

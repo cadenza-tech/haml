@@ -1,8 +1,13 @@
 import * as assert from 'node:assert';
+import { CONTROL_SNIPPETS } from '../../pure/controlSnippets';
 import type { LineRange } from '../../pure/lineRange';
 import type { Eol } from '../../pure/textModel';
 import { buildBlockWrap, buildConditionalWrap, escapeSnippetText, type WrapSpec } from '../../pure/wrapBlock';
 import { snapshotOfLines } from '../support/snapshot';
+
+function firstLineOf(prefix: string): string | undefined {
+  return CONTROL_SNIPPETS.find((snippet) => snippet.prefix === prefix)?.body.split('\n')[0];
+}
 
 /** What the snippet becomes once it is accepted with every placeholder left at its default. */
 function expand(snippet: string): string {
@@ -40,11 +45,12 @@ suite('pure/wrapBlock Test Suite', () => {
       assert.deepStrictEqual(applied(lines, spec), ['  - if condition', '      %h2 Title', '    .card']);
     });
 
-    // The header must match snippets/haml.code-snippets so one extension speaks one dialect, and the
+    // The header must match the `if` control snippet so one extension speaks one dialect, and the
     // placeholder must carry a default so Esc leaves `- if condition` rather than `- if `.
     test('should use the same header and tab stop as the if snippet', () => {
       const spec = wrap(['%p a'], { startLine: 0, endLine: 0 });
       assert.strictEqual(spec.snippet.split('\n')[0], '- if ${1:condition}');
+      assert.strictEqual(spec.snippet.split('\n')[0], firstLineOf('if'));
     });
 
     // Haml carries these characters constantly, and an unescaped one would corrupt the body before the
@@ -92,11 +98,12 @@ suite('pure/wrapBlock Test Suite', () => {
   });
 
   suite('buildBlockWrap', () => {
-    // Must match the each entry in snippets/haml.code-snippets, tab stop numbering included: the first
-    // stop is the receiver, which is what the user types first.
+    // Must match the `each` control snippet, tab stop numbering included: the first stop is the
+    // receiver, which is what the user types first.
     test('should use the same header and tab stops as the each snippet', () => {
       const spec = buildBlockWrap({ startLine: 0, endLine: 0 }, snapshotOfLines(['%p a']), '  ', '\n');
       assert.strictEqual(spec.snippet.split('\n')[0], '- ${1:collection}.each do |${2:item}|');
+      assert.strictEqual(spec.snippet.split('\n')[0], firstLineOf('each'));
     });
 
     test('should leave valid Haml when the placeholders are not filled in', () => {
