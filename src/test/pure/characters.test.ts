@@ -1,5 +1,6 @@
 import * as assert from 'node:assert';
 import {
+  findInterpolationEnd,
   findLiteralEnd,
   isBlankText,
   isClosingBracket,
@@ -10,6 +11,7 @@ import {
   isWordCharacter,
   skipSpaces
 } from '../../pure/characters';
+import { FAST_ENOUGH_MS, fastestOf } from '../support/timing';
 
 /**
  * The regexes these predicates replaced.
@@ -151,7 +153,53 @@ suite('pure/characters Test Suite', () => {
     // frames per three characters, and a 30 KB hostile line overflows the stack mid-keystroke.
     test('should survive a hostile line of nested interpolation openers', () => {
       const line = '"#{'.repeat(10000);
-      assert.strictEqual(findLiteralEnd(line, 0), line.length);
+      const elapsed = fastestOf(() => {
+        assert.strictEqual(findLiteralEnd(line, 0), line.length);
+      });
+      assert.ok(elapsed < FAST_ENOUGH_MS, `took ${elapsed}ms`);
+    });
+  });
+
+  suite('findInterpolationEnd', () => {
+    test('should return the index after the closing brace', () => {
+      assert.strictEqual(findInterpolationEnd('a#{b}c', 2, 6), 5);
+      assert.strictEqual(findInterpolationEnd('#{a { b } c}', 1, 12), 12);
+    });
+
+    // The limit is the end of the literal the interpolation is written in: a brace that closes it
+    // exactly there counts, and one that lies at the limit or past it does not.
+    test('should look no further than the limit', () => {
+      assert.strictEqual(findInterpolationEnd('#{a}', 1, 4), 4);
+      assert.strictEqual(findInterpolationEnd('#{a}', 1, 3), -1);
+      assert.strictEqual(findInterpolationEnd('#{a', 1, 3), -1);
+    });
+
+    // -1 rather than the limit, which a caller could only tell from a close by looking at the last
+    // character - and `#{ki, locals: { a: 1 }` ends in a brace that closes something else.
+    test('should not take a brace that closes something else for its own', () => {
+      assert.strictEqual(findInterpolationEnd('#{ {a}', 1, 6), -1);
+      assert.strictEqual(findInterpolationEnd('#{x "}', 1, 6), -1);
+      assert.strictEqual(findInterpolationEnd('#{ki, locals: { a: 1 }', 1, 22), -1);
+    });
+
+    test('should step over a nested literal that holds a brace', () => {
+      assert.strictEqual(findInterpolationEnd(`#{h['}', ',']}`, 1, 14), 14);
+      assert.strictEqual(findInterpolationEnd('#{"a#{b}"}', 1, 10), 10);
+    });
+
+    test('should not let an escaped brace close it', () => {
+      assert.strictEqual(findInterpolationEnd('#{a\\}b}', 1, 7), 7);
+    });
+
+    // Timed as well as asserted: the two scanners call each other, and a step that fails to advance
+    // hangs here rather than failing. Mocha's timeout cannot interrupt a synchronous loop, so without
+    // this the build would stop rather than go red.
+    test('should report a hostile line of nested openers as unclosed', () => {
+      const line = '#{"'.repeat(10000);
+      const elapsed = fastestOf(() => {
+        assert.strictEqual(findInterpolationEnd(line, 1, line.length), -1);
+      });
+      assert.ok(elapsed < FAST_ENOUGH_MS, `took ${elapsed}ms`);
     });
   });
 });

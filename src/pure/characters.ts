@@ -130,24 +130,41 @@ const MAX_INTERPOLATION_DEPTH = 32;
  * skipBalanced only needs to ignore it, so neither should pay for a slice on every keystroke.
  */
 export function findLiteralEnd(text: string, quoteIndex: number): number {
-  return findLiteralEndAt(text, quoteIndex, 0);
+  return findLiteralEndAt(text, quoteIndex, 0, text.length);
 }
 
-function findLiteralEndAt(text: string, quoteIndex: number, depth: number): number {
+/**
+ * Index of the character after the `}` matching the `#{`'s brace at `braceIndex`, or -1 when nothing
+ * before `limit` closes it. Nested braces and nested string literals - which may hold unbalanced
+ * braces of their own - are consumed whole, exactly as findLiteralEnd consumes them, so the two
+ * agree on where an interpolation ends.
+ *
+ * The limit is the end of the literal the interpolation is written in. Without one, a caller asking
+ * about every literal of a line reads to the end of that line each time. -1 and not the limit for an
+ * interpolation left open: `#{ki, locals: { a: 1 }` ends in a brace as well, and a caller told only
+ * where the scan stopped would take that one for the close.
+ */
+export function findInterpolationEnd(text: string, braceIndex: number, limit: number): number {
+  return interpolationEndAt(text, braceIndex, 1, limit);
+}
+
+function findLiteralEndAt(text: string, quoteIndex: number, depth: number, limit: number): number {
   if (depth > MAX_INTERPOLATION_DEPTH) {
-    return text.length;
+    return limit;
   }
   const quote = text[quoteIndex];
   const interpolates = quote === '"';
   let index = quoteIndex + 1;
-  while (index < text.length) {
+  while (index < limit) {
     const code = text.charCodeAt(index);
     if (code === BACKSLASH) {
       index += 2;
       continue;
     }
     if (interpolates && code === HASH && text.charCodeAt(index + 1) === BRACE_OPEN) {
-      index = skipInterpolation(text, index + 1, depth + 1);
+      const after = interpolationEndAt(text, index + 1, depth + 1, limit);
+      // An interpolation left open takes the rest of the literal with it, as Ruby reads it.
+      index = after === -1 ? limit : after;
       continue;
     }
     if (text[index] === quote) {
@@ -155,24 +172,19 @@ function findLiteralEndAt(text: string, quoteIndex: number, depth: number): numb
     }
     index++;
   }
-  return text.length;
+  return limit;
 }
 
-/**
- * Index of the character after the `}` matching the `#{`'s brace at `braceIndex`, or `text.length`
- * when the interpolation never closes. Nested braces and nested string literals - which may hold
- * unbalanced braces of their own - are consumed whole.
- */
-function skipInterpolation(text: string, braceIndex: number, depth: number): number {
+function interpolationEndAt(text: string, braceIndex: number, depth: number, limit: number): number {
   if (depth > MAX_INTERPOLATION_DEPTH) {
-    return text.length;
+    return -1;
   }
   let nesting = 0;
   let index = braceIndex;
-  while (index < text.length) {
+  while (index < limit) {
     const character = text[index];
     if (character === "'" || character === '"') {
-      index = findLiteralEndAt(text, index, depth + 1) + 1;
+      index = findLiteralEndAt(text, index, depth + 1, limit) + 1;
       continue;
     }
     const code = text.charCodeAt(index);
@@ -190,5 +202,5 @@ function skipInterpolation(text: string, braceIndex: number, depth: number): num
     }
     index++;
   }
-  return text.length;
+  return -1;
 }
