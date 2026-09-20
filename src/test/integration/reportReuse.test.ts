@@ -224,6 +224,37 @@ suite('report reuse Test Suite', () => {
     controller.dispose();
   });
 
+  // onDidSaveTextDocument takes the lint.run: "off" path on every save. Lifting the back-off there
+  // meant a file the formatter timed out on blocked the next save for the full timeout again, and
+  // the one after that: the record was written by the format pass and wiped by the save it caused.
+  test('should keep the timeout back-off when lint.run is off', async () => {
+    const off = config({ lintRun: 'off' });
+    const runner = stubLintRunner(() => ({ ok: true, outcome: { report: ONE_OFFENSE } }));
+    const controller = new DiagnosticsController(runner, logger, () => off, notice());
+    const document = await openView('offenses.haml');
+
+    controller.refreshNow(document);
+
+    assert.strictEqual(runner.forgotten, 0, 'switching diagnostics off is not the user asking for another attempt');
+    assert.strictEqual(runner.abandoned, 1, 'a run parked on the queue must still be dropped');
+    controller.dispose();
+  });
+
+  // Haml: Restart Linter and a settings or rule change force, and README promises they lift the
+  // back-off. With diagnostics off the formatter is the only run left to benefit, so it matters more.
+  test('should still lift the timeout back-off for a forced request when lint.run is off', async () => {
+    const off = config({ lintRun: 'off' });
+    const runner = stubLintRunner(() => ({ ok: true, outcome: { report: ONE_OFFENSE } }));
+    const controller = new DiagnosticsController(runner, logger, () => off, notice());
+    const document = await openView('offenses.haml');
+
+    controller.refreshNow(document, true);
+
+    assert.strictEqual(runner.forgotten, 1);
+    assert.strictEqual(runner.modes.length, 0, 'and must still not lint');
+    controller.dispose();
+  });
+
   // Switching lint.run off disarms the debounce timer, but a run already in flight has nothing to
   // trip its staleness check on - same version, same generation. Its result must not repopulate the
   // panel the user just switched off, and must not leave a digest behind that a later lint would

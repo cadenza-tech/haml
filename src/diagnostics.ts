@@ -79,9 +79,16 @@ export class DiagnosticsController implements vscode.Disposable {
       // Disarming matters: lint() deliberately does not re-check lintRun, because `Haml: Lint File`
       // has to run whatever the setting says. A timer left armed here would fire a moment later and
       // repopulate the panel the user just switched off - and so would a run already in flight,
-      // whose staleness check has nothing to trip on (same version, same generation). forget()
-      // cancels that run and drops its generation, so its result can never publish.
-      this.forget(document);
+      // whose staleness check has nothing to trip on (same version, same generation). discard()
+      // cancels that run and drops its generation, so its result can never publish. Not forget():
+      // every save comes through here, and lifting the timeout back-off each time would make
+      // format-on-save spend the whole timeout again on a file it has already given up on. A forced
+      // request still lifts it, as it does with diagnostics on: the settings or rules just changed,
+      // or the user asked for a restart, and the formatter is the one run this document still gets.
+      if (force) {
+        this.client.forget(document.uri);
+      }
+      this.discard(document);
       return;
     }
     this.detached('lint', this.lint(document, config, force));
@@ -168,11 +175,16 @@ export class DiagnosticsController implements vscode.Disposable {
     this.collection.delete(document.uri);
   }
 
-  /** Cancels any in-flight run for a document and forgets its state. */
+  /** Cancels any in-flight run for a document and forgets its state, the timeout back-off included. */
   forget(document: vscode.TextDocument): void {
+    this.client.forget(document.uri);
+    this.discard(document);
+  }
+
+  /** Everything forget() does except lifting the back-off, which an ordinary save must not do. */
+  private discard(document: vscode.TextDocument): void {
     const key = document.uri.toString();
     this.publishedFor.delete(key);
-    this.client.forget(document.uri);
     // A run parked on the process runner's concurrency queue survives the cancel below unsettled;
     // left in the client's coalescing map it would swallow the first lint after a reopen, which
     // starts again at the version the dead run was keyed under.
