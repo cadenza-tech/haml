@@ -100,15 +100,20 @@ export interface DisableActionPlan {
   readonly linterName: string;
 }
 
-/** Syntax and parse errors carry no linter, so nothing can be disabled for them. */
+/** Every haml-lint linter is a Ruby class, and its name is what the report carries. */
+const LINTER_NAME = /^[A-Za-z][A-Za-z0-9_]*$/;
+
+/**
+ * Syntax and parse errors carry no linter, so nothing can be disabled for them.
+ *
+ * Anything that is not a class name is refused as well. This is the one value from the process's
+ * output that gets written into the document, and the report is not trusted input: a workspace can
+ * put its own haml-lint on PATH, and a name holding a newline would let it choose a line of the
+ * template.
+ */
 export function linterNameOf(code: unknown): string | undefined {
-  if (typeof code === 'string') {
-    return code;
-  }
-  if (typeof code === 'object' && code !== null && 'value' in code) {
-    return String((code as { value: unknown }).value);
-  }
-  return undefined;
+  const name = typeof code === 'object' && code !== null && 'value' in code ? (code as { value: unknown }).value : code;
+  return typeof name === 'string' && LINTER_NAME.test(name) ? name : undefined;
 }
 
 /**

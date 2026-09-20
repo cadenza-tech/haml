@@ -443,6 +443,18 @@ suite('pure/disableComment Test Suite', () => {
         assert.strictEqual(linterNameOf(code), undefined, JSON.stringify(code) ?? 'undefined');
       }
     });
+
+    // The one value from the process's output that is written into the document. The report is not
+    // trusted input - a workspace can put its own haml-lint on PATH - and a name holding a newline
+    // would let it write a line of its choosing into the template.
+    test('should refuse a name that is not a Ruby class name', () => {
+      for (const name of ['LineLength\n= system("x")', 'Line Length', 'RuboCop; rm', '', '1st', 'Rails::Cop']) {
+        assert.strictEqual(linterNameOf(name), undefined, JSON.stringify(name));
+        assert.strictEqual(linterNameOf({ value: name, target: 'https://example.test' }), undefined, JSON.stringify(name));
+      }
+      assert.strictEqual(linterNameOf('RuboCop'), 'RuboCop');
+      assert.strictEqual(linterNameOf('Space_Inside2'), 'Space_Inside2');
+    });
   });
 
   suite('planDisableActions', () => {
