@@ -4,17 +4,28 @@
 // Vendored commit: 504875f60bcd474f17762b2daf97680476135f79 (snippets/snippets.json)
 // See syntaxes/NOTICE.md for the licence and the list of modifications.
 //
-// Bodies are verbatim. The 221 entries here are the upstream 228 minus the seven whose
-// prefix already exists in snippets/haml.code-snippets (if, else, elsif, unless, each, yield,
-// content_for), so the two sets never produce duplicate suggestions.
+// Bodies are verbatim apart from the repairs below. The 221 entries here are the upstream 228
+// minus the seven whose prefix already exists in snippets/haml.code-snippets (if, else, elsif,
+// unless, each, yield, content_for), so the two sets never produce duplicate suggestions.
 //
-// Three upstream bodies were repaired. VS Code's snippet parser rejects two outright and inserts
+// Seven upstream bodies were repaired. VS Code's snippet parser rejects two outright and inserts
 // their literal text instead: fields_for had `${:record_object}` (no tab stop number) and
 // render_partial_collection had `${7, layout: $8}` (a comma where the parser wants a colon).
-// video_tag parses, but inserted Ruby that cannot: upstream's `autobuf.fer:` (a stray dot inside
-// the `autobuffer:` keyword) is not a valid keyword argument.
+// The other five parse, but inserted Ruby that cannot:
+//   video_tag            `autobuf.fer:`, a stray dot inside the `autobuffer:` keyword
+//   stylesheet_link_tag  `'${1:src}' ${2:media: '$3'}`, no comma before the keyword argument; now
+//                        `'${1:src}'${2:, media: '$3'}`, the shape favicon_link_tag already has
+//   button_block         `= button ${1:, {\}} do` opened its argument list with the comma; now
+//   f.button_block       `= button(${1:{\}}) do`, in parentheses like time_tag_block because a bare
+//                        `{}` there is read as a second block
+//   select               `${2:method}, ${3:, {\}}` doubled the comma; now `${2:method}${3:, {\}}`,
+//                        the head select_block already has
+// Three `detail` strings named another helper and were corrected: mail_to_block said
+// 'link_to_unless_current block', and collection_radio_buttons and collection_radio_buttons_block
+// both said 'form.collection_radio_buttons'.
 //
-// Generated - do not hand-edit. Regenerate from the pinned commit above, then reapply those three.
+// Generated - do not hand-edit. Regenerate from the pinned commit above, then reapply all of the
+// above. src/test/pure/railsSnippets.test.ts fails by name for the comma repairs if one is lost.
 
 import type { RailsSnippet } from '../types';
 
@@ -30,7 +41,7 @@ export const UPSTREAM_RAILS_SNIPPETS: readonly RailsSnippet[] = [
   { prefix: 'image_alt', body: "image_alt('$1')", detail: 'image_alt' },
   { prefix: 'image_tag', body: "= image_tag '${1:src}'${2:, alt: '$3', height: '$4', width: '$5', class: '$6'}", detail: 'image_tag' },
   { prefix: 'javascript_include_tag', body: "= javascript_include_tag '${1:src}'", detail: 'javascript_include_tag' },
-  { prefix: 'stylesheet_link_tag', body: "= stylesheet_link_tag '${1:src}' ${2:media: '$3'}", detail: 'stylesheet_link_tag' },
+  { prefix: 'stylesheet_link_tag', body: "= stylesheet_link_tag '${1:src}'${2:, media: '$3'}", detail: 'stylesheet_link_tag' },
   { prefix: 'video_tag', body: "= video_tag '${1:src}'${2:, controls: '$3', autobuffer: $4, size: '$5', poster: '$6'}", detail: 'video_tag' },
   { prefix: 'asset_path', body: "= asset_path '${1:src}'${2:, type: '$3'}", detail: 'asset_path' },
   { prefix: 'asset_url', body: "= asset_url '${1:src}'${2:, type: '$3'}", detail: 'asset_url' },
@@ -84,9 +95,9 @@ export const UPSTREAM_RAILS_SNIPPETS: readonly RailsSnippet[] = [
   { prefix: 'time_tag_block', body: '= time_tag(${1:date_or_time}${2:, {\\}}) do\n  $4', detail: 'time_tag block' },
   { prefix: 'debug', body: '= debug $1', detail: 'debug' },
   { prefix: 'button', body: '= button ${1:name}${2:, {\\}}', detail: 'button' },
-  { prefix: 'button_block', body: '= button ${1:, {\\}} do\n  $3', detail: 'button block' },
+  { prefix: 'button_block', body: '= button(${1:{\\}}) do\n  $3', detail: 'button block' },
   { prefix: 'f.button', body: '= f.button ${1:name}${2:, {\\}}', detail: 'form.button' },
-  { prefix: 'f.button_block', body: '= f.button ${1:, {\\}} do\n  $3', detail: 'form.button block' },
+  { prefix: 'f.button_block', body: '= f.button(${1:{\\}}) do\n  $3', detail: 'form.button block' },
   { prefix: 'button_tag', body: '= button_tag $1', detail: 'button_tag' },
   { prefix: 'button_tag_block', body: '= button_tag $1 do\n  $2', detail: 'button_tag block' },
   { prefix: 'check_box', body: '= check_box ${1:object_name}, ${2:method}${3:, {\\}}', detail: 'check_box' },
@@ -115,7 +126,7 @@ export const UPSTREAM_RAILS_SNIPPETS: readonly RailsSnippet[] = [
   { prefix: 'radio_button', body: '= radio_button ${1:object_name}, ${2:method}, ${3:tag_value}${4:, {\\}}', detail: 'radio_button' },
   { prefix: 'f.radio_button', body: '= f.radio_button ${1:method}, ${2:tag_value}${3:, {\\}}', detail: 'form.radio_button' },
   { prefix: 'radio_button_tag', body: '= radio_button_tag ${1:name}, ${2:value}${3:, {\\}}', detail: 'radio_button_tag' },
-  { prefix: 'select', body: '= select ${1:object}, ${2:method}, ${3:, {\\}}', detail: 'select' },
+  { prefix: 'select', body: '= select ${1:object}, ${2:method}${3:, {\\}}', detail: 'select' },
   { prefix: 'select_block', body: '= select ${1:object}, ${2:method}${3:, {\\}} do\n  $4', detail: 'select block' },
   { prefix: 'f.select', body: '= f.select ${1:method}, ${2:choices}${3:, {\\}}', detail: 'form.select' },
   { prefix: 'f.select_block', body: '= f.select ${1:method}, ${2:choices}${3:, {\\}} do\n  $4', detail: 'form.select block' },
@@ -199,7 +210,7 @@ export const UPSTREAM_RAILS_SNIPPETS: readonly RailsSnippet[] = [
   {
     prefix: 'collection_radio_buttons',
     body: '= collection_radio_buttons ${1:object}, ${2:method}, ${3:collection}, ${4:value_method}, ${5:text_method}${6:, {\\}}',
-    detail: 'form.collection_radio_buttons'
+    detail: 'collection_radio_buttons'
   },
   {
     prefix: 'f.collection_radio_buttons',
@@ -209,7 +220,7 @@ export const UPSTREAM_RAILS_SNIPPETS: readonly RailsSnippet[] = [
   {
     prefix: 'collection_radio_buttons_block',
     body: '= collection_radio_buttons ${1:object}, ${2:method}, ${3:collection}, ${4:value_method}, ${5:text_method}${6:, {\\}} do\n  $7',
-    detail: 'form.collection_radio_buttons'
+    detail: 'collection_radio_buttons block'
   },
   {
     prefix: 'f.collection_select',
@@ -307,5 +318,5 @@ export const UPSTREAM_RAILS_SNIPPETS: readonly RailsSnippet[] = [
   { prefix: 'link_to_unless_current', body: '= link_to_unless_current(${1:name}${2:, {\\}})', detail: 'link_to_unless_current' },
   { prefix: 'link_to_unless_current_block', body: '= link_to_unless_current(${1:name}${2:, {\\}}) do\n  $3', detail: 'link_to_unless_current block' },
   { prefix: 'mail_to', body: "= mail_to('${1:address}'${2:, {\\}})", detail: 'mail_to' },
-  { prefix: 'mail_to_block', body: "= mail_to('${1:address}'${2:, {\\}}) do\n  $3", detail: 'link_to_unless_current block' }
+  { prefix: 'mail_to_block', body: "= mail_to('${1:address}'${2:, {\\}}) do\n  $3", detail: 'mail_to block' }
 ];

@@ -42,6 +42,54 @@ function placeholderProblem(body: string): string | null {
 }
 
 /**
+ * What a body becomes once it is accepted with every placeholder left at its default: tab stops
+ * vanish, a default stays, the first choice is taken, and an escape yields the character it guards.
+ */
+function expandDefaults(body: string): string {
+  let index = 0;
+  const run = (nested: boolean): string => {
+    let out = '';
+    while (index < body.length) {
+      const character = body[index] as string;
+      if (character === '\\' && index + 1 < body.length) {
+        out += body[index + 1];
+        index += 2;
+        continue;
+      }
+      if (nested && character === '}') {
+        index++;
+        return out;
+      }
+      const braced = character === '$' && body[index + 1] === '{';
+      let cursor = index + (braced ? 2 : 1);
+      while (character === '$' && /[0-9]/.test(body[cursor] ?? '')) {
+        cursor++;
+      }
+      if (character !== '$' || cursor === index + (braced ? 2 : 1)) {
+        out += character;
+        index++;
+        continue;
+      }
+      index = cursor;
+      if (braced && body[index] === ':') {
+        index++;
+        out += run(true);
+      } else if (braced && body[index] === '|') {
+        const end = body.indexOf('|}', index);
+        // Without this an unclosed choice rewinds the index and the loop never ends.
+        assert.ok(end !== -1, `${JSON.stringify(body)} opens a choice it never closes`);
+        out += body.slice(index + 1, end).split(',')[0] as string;
+        index = end + 2;
+      } else if (braced) {
+        index++;
+      }
+    }
+    return out;
+  };
+  return run(false);
+}
+
+/**
  * The contributed snippets, read from the repository root. Compiled tests live in
  * out/test/pure, which is three levels down. The file is JSONC by contract but currently holds no
  * comments, so JSON.parse works; add a stripper here if that ever changes.
@@ -92,13 +140,66 @@ suite('pure/railsSnippets Test Suite', () => {
     }
   });
 
-  // The three repairs documented in railsSnippetsUpstream.ts and syntaxes/NOTICE.md; regenerating
-  // from the pinned upstream commit reverts them, which is exactly what this must catch.
+  // Three of the repairs documented in railsSnippetsUpstream.ts and syntaxes/NOTICE.md; regenerating
+  // from the pinned upstream commit reverts them, which is exactly what this must catch. The comma
+  // repairs are caught by shape, in 'the Ruby a body inserts' below.
   test('should keep the documented upstream repairs applied', () => {
     const byPrefix = new Map(UPSTREAM_RAILS_SNIPPETS.map((snippet) => [snippet.prefix, snippet.body]));
     assert.ok(byPrefix.get('fields_for')?.includes('${2:record_object}'), 'fields_for lost its tab stop repair');
     assert.ok(byPrefix.get('render_partial_collection')?.includes('${7:, layout: $8}'), 'render_partial_collection lost its colon repair');
     assert.ok(byPrefix.get('video_tag')?.includes('autobuffer: $4'), 'video_tag lost its autobuffer repair');
+  });
+
+  // Nothing parses the Ruby a body inserts, so the ways a body has actually gone wrong are looked for
+  // by shape, in what it becomes when every placeholder is left at its default. All three have shipped:
+  // `${2:, class: '$3'}` - how an optional argument is written - directly after the method name gave
+  // `tag.div, class: ''`; upstream's `select` had a comma before such a placeholder as well, and its
+  // `stylesheet_link_tag` had none at all between the source and `media:`.
+  suite('the Ruby a body inserts', () => {
+    let headers: { prefix: string; header: string }[] = [];
+
+    // Expanded here rather than while the suite is being defined, so that a body the expander
+    // chokes on fails these tests by name instead of taking mocha down as it loads the file.
+    suiteSetup(() => {
+      headers = RAILS_SNIPPETS.map((snippet) => ({ prefix: snippet.prefix, header: expandDefaults(snippet.body).split('\n')[0] as string }));
+    });
+
+    test('should not open the argument list with a comma', () => {
+      for (const { prefix, header } of headers) {
+        assert.ok(!/^[=-]+\s*[\w.?!]+\s*,/.test(header), `${prefix} expands to ${JSON.stringify(header)}`);
+      }
+    });
+
+    test('should not leave an argument empty', () => {
+      for (const { prefix, header } of headers) {
+        assert.ok(!/,\s*,/.test(header), `${prefix} expands to ${JSON.stringify(header)}`);
+      }
+    });
+
+    test('should separate a keyword argument from the literal before it', () => {
+      for (const { prefix, header } of headers) {
+        assert.ok(!/['"]\s+[a-z_]+:\s/.test(header), `${prefix} expands to ${JSON.stringify(header)}`);
+      }
+    });
+
+    // The checks above are only as good as the expansion: `${2:, {\\}}` holds an escaped brace, and an
+    // expander that stops at it leaves the placeholder - comma and all - unexpanded and unseen.
+    test('should be read through an expansion that understands escapes, nesting and choices', () => {
+      assert.strictEqual(expandDefaults('= button ${1:name}${2:, {\\}} do\n  $3'), '= button name, {} do\n  ');
+      assert.strictEqual(expandDefaults('= submit${1: ${2:value}${3:, {\\}}}'), '= submit value, {}');
+      assert.strictEqual(expandDefaults('!!! ${1|5,XML,Strict|}'), '!!! 5');
+      assert.strictEqual(expandDefaults('= number_to_currency "\\$${1:1}"'), '= number_to_currency "$1"');
+      assert.throws(() => expandDefaults('= f ${1|a,b}'), /never closes/);
+    });
+  });
+
+  // Upstream labelled these three after a neighbouring helper, and the label is all the suggestion
+  // list shows beside the prefix. Pinned because regenerating the vendored file brings them back.
+  test('should label the three helpers upstream mislabelled after themselves', () => {
+    const detailOf = (prefix: string): string | undefined => RAILS_SNIPPETS.find((snippet) => snippet.prefix === prefix)?.detail;
+    assert.strictEqual(detailOf('mail_to_block'), 'mail_to block');
+    assert.strictEqual(detailOf('collection_radio_buttons'), 'collection_radio_buttons');
+    assert.strictEqual(detailOf('collection_radio_buttons_block'), 'collection_radio_buttons block');
   });
 
   // Haml is indentation-sensitive and rejects tabs outright.

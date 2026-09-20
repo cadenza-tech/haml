@@ -62,11 +62,17 @@
     filters, doctypes, comments, `case`/`when`, `begin`/`rescue`, and `haml-lint:disable` blocks.
   - `src/pure/railsSnippetsUpstream.ts` holds the remaining 221. Prefixes and bodies are verbatim
     apart from the container, which changed from a JSON object keyed by name to a TypeScript array,
-    and three repaired bodies. `fields_for` had `${:record_object}` with no tab stop number and
+    and seven repaired bodies. `fields_for` had `${:record_object}` with no tab stop number and
     `render_partial_collection` had `${7, layout: $8}` with a comma where a colon belongs — both
-    rejected by VS Code's snippet parser, so that upstream inserts their literal text — and
-    `video_tag` had `autobuf.fer:` where Rails wants `autobuffer:`, which upstream inserts as
-    broken Ruby. The seven above are excluded so the two sets never offer the same prefix twice.
+    rejected by VS Code's snippet parser, so that upstream inserts their literal text. The other
+    five inserted Ruby that is a syntax error as it stands: `video_tag` had `autobuf.fer:` where
+    Rails wants `autobuffer:`; `stylesheet_link_tag` had no comma between the source and `media:`;
+    `button_block` and `f.button_block` opened their argument list with the comma of the optional
+    hash, which is now parenthesized as in `time_tag_block`; and `select` had a comma before that
+    placeholder as well as inside it. Three `detail` strings that named another helper were
+    corrected: `mail_to_block`, `collection_radio_buttons` and `collection_radio_buttons_block`.
+    The header of the file lists each change exactly, so that they can be reapplied after
+    regenerating it. The seven above are excluded so the two sets never offer the same prefix twice.
     They are offered through a CompletionItemProvider rather than `contributes.snippets`, because
     that contribution point takes only `language` and `path` and so cannot be turned off by a
     setting; `haml.snippets.rails` controls them, and defaults to detecting whether the workspace
