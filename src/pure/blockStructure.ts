@@ -107,7 +107,11 @@ const TAG_HEAD = /^[ \t]*(?:%[-:\w]+|[.#][-:\w@]+)(?:[.#][-:\w@]+)*/;
 const TRAILING_COMMA = /,[ \t]*$/;
 /** Haml's own test (Parser#is_multiline?): whitespace, a pipe, and not the end of `do |a, b |`. */
 const TRAILING_PIPE = /\s\|[ \t]*$/;
-const BLOCK_PARAMETERS = /do\s*\|\s*[^|]*\s+\|[ \t]*$/;
+/**
+ * Haml writes this `do\s*\|\s*[^|]*\s+\|`, which matches the same lines - `\s*[^|]*\s+` is `[^|]*\s` -
+ * and is cubic in a run of spaces, on a path the snippet provider takes on a keystroke.
+ */
+const BLOCK_PARAMETERS = /do\s*\|[^|]*\s\|[ \t]*$/;
 /**
  * How far a construct is followed, in either direction. Nothing written by hand is this long, and the
  * bound is what keeps one misread quote - `%q(')`, `?'` - from stretching a construct to the end of the

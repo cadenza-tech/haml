@@ -1,6 +1,7 @@
 import * as assert from 'node:assert';
 import { extendBlock, findBlockStart, findConstructEnd, findConstructStart, hasConsumingAncestor } from '../../pure/blockStructure';
 import { snapshotOfLines } from '../support/snapshot';
+import { FAST_ENOUGH_MS, fastestOf } from '../support/timing';
 
 suite('pure/blockStructure Test Suite', () => {
   suite('extendBlock', () => {
@@ -174,6 +175,15 @@ suite('pure/blockStructure Test Suite', () => {
     test('should find the statement a deeper line continues', () => {
       assert.strictEqual(hasConsumingAncestor(1, snapshotOfLines(['= form_with model: @user,', '    lo'])), true);
       assert.strictEqual(hasConsumingAncestor(1, snapshotOfLines(["%a{ href: '/x',", '    cl', "    id: 'y' }"])), true);
+    });
+
+    // Asked on a keystroke, in untrusted workspaces too, and every ancestor is read as a pipe line
+    // first. The test for block parameters had three quantifiers that could all take the same run
+    // of spaces, and took 1.6 seconds on this line.
+    test('should stay fast on an ancestor made to look like block parameters', () => {
+      const document = snapshotOfLines([`- foo do |${' '.repeat(2000)}x| |`, '  i']);
+      const elapsed = fastestOf(() => hasConsumingAncestor(1, document));
+      assert.ok(elapsed < FAST_ENOUGH_MS, `took ${elapsed}ms`);
     });
 
     // Nothing closes a list while it is being typed, which is exactly when the question is asked.
