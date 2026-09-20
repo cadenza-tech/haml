@@ -144,6 +144,28 @@ suite('package.json manifest Test Suite', () => {
       }
     });
 
+    // A filter's `end` is only tried while the filter is on top of the rule stack. A construct the
+    // embedded grammar leaves open - a `/*`, a template literal, the `{` of a CSS rule being typed -
+    // sits above it, so the filter never ends and the rest of the file is coloured as that construct.
+    // `while` is asked of every line whatever is open, and pops it all. syntaxes/fixtures/filter-leak.haml
+    // is the snapshot; this pins the shape so a rule added later cannot quietly go back to `end`.
+    test('should bound every rule with an indented body by while rather than end', () => {
+      const grammar = readJson('syntaxes', 'haml.tmLanguage.json') as {
+        patterns: { begin?: string; end?: string; while?: string; patterns?: unknown[] }[];
+      };
+      // A rule that bounds itself by its own header's indent is one that reads the lines below it.
+      const bodies = grammar.patterns.filter((rule) => (rule.end ?? rule.while)?.includes('\\1') === true);
+      assert.strictEqual(bodies.length, 23, 'the pattern no longer recognises the rules that take a body');
+      for (const rule of bodies) {
+        assert.strictEqual(rule.end, undefined, `the rule beginning ${rule.begin} ends on a pattern`);
+        // The whole condition, not its opening: a `while` is the complement of the `end` it replaces,
+        // and the comment's body is told from what follows it by `\n` where a filter's is by `$\n*`.
+        // Pasting one rule's condition onto the other reads a blank line as the end of the body.
+        const expected = rule.begin?.includes('\\-\\#') === true ? '^(?=\\1\\s+|\\n)' : '^(?=\\1\\s+|$\\n*)';
+        assert.strictEqual(rule.while, expected, `the rule beginning ${rule.begin} is bounded by ${rule.while}`);
+      }
+    });
+
     // vscode-textmate silently drops an entire pattern when its include target is not registered,
     // so a grammar added without a stub makes the snapshots look unscoped rather than fail.
     test('should register every contributed grammar with the snapshot harness', () => {

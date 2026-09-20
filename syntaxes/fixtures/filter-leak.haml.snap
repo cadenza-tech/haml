@@ -1,0 +1,95 @@
+>-# Every filter below leaves a construct of its embedded grammar open. The line after it must be a
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>-# Haml tag again, and a filter nested under a tag must hand back to its sibling.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>:javascript
+#^^^^^^^^^^^ text.haml js.haml
+>  const a = LEFT_OPEN_BY_THE_STUB
+#^^^^^^^^^^^^ text.haml js.haml
+#            ^^^^^^^^^^^^^^^^^^^^^ text.haml js.haml meta.left-open.stub
+>%p after javascript
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^ text.haml
+>:coffee
+#^^^^^^^ text.haml source.coffee.embedded.filter.haml
+>  a = LEFT_OPEN_BY_THE_STUB
+#^^^^^^ text.haml source.coffee.embedded.filter.haml
+#      ^^^^^^^^^^^^^^^^^^^^^ text.haml source.coffee.embedded.filter.haml meta.left-open.stub
+>%p after coffee
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^ text.haml
+>:markdown
+#^^^^^^^^^ text.haml meta.embedded.markdown entity.name.tag.haml
+>  LEFT_OPEN_BY_THE_STUB
+#^^ text.haml meta.embedded.markdown
+#  ^^^^^^^^^^^^^^^^^^^^^ text.haml meta.embedded.markdown meta.left-open.stub
+>
+>  still markdown
+#^^^^^^^^^^^^^^^^^ text.haml meta.embedded.markdown meta.left-open.stub
+>%p after markdown
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^ text.haml
+>:css
+#^^^^ text.haml meta.embedded.css entity.name.tag.haml
+>  .a { LEFT_OPEN_BY_THE_STUB
+#^^^^^^^ text.haml meta.embedded.css
+#       ^^^^^^^^^^^^^^^^^^^^^ text.haml meta.embedded.css meta.left-open.stub
+>%p after css
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^ text.haml
+>:scss
+#^^^^^ text.haml meta.embedded.scss entity.name.tag.haml
+>  .a { LEFT_OPEN_BY_THE_STUB
+#^^^^^^^ text.haml meta.embedded.scss
+#       ^^^^^^^^^^^^^^^^^^^^^ text.haml meta.embedded.scss meta.left-open.stub
+>%p after scss
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^ text.haml
+>:ruby
+#^^^^^ text.haml source.ruby.embedded.filter.haml
+>  a = LEFT_OPEN_BY_THE_STUB
+#^^^^^^ text.haml source.ruby.embedded.filter.haml
+#      ^^^^^^^^^^^^^^^^^^^^^ text.haml source.ruby.embedded.filter.haml meta.left-open.stub
+>%p after ruby
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^ text.haml
+>:php
+#^^^^ text.haml meta.embedded.php entity.name.tag.haml
+>  LEFT_OPEN_BY_THE_STUB
+#^^ text.haml meta.embedded.php
+#  ^^^^^^^^^^^^^^^^^^^^^ text.haml meta.embedded.php meta.left-open.stub
+>%p after php
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^ text.haml
+>%script
+#^^^^^^^ text.haml js.inline.haml
+>  const b = LEFT_OPEN_BY_THE_STUB
+#^^^^^^^^^^^^ text.haml js.inline.haml
+#            ^^^^^^^^^^^^^^^^^^^^^ text.haml js.inline.haml meta.left-open.stub
+>%p after script
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^ text.haml
+>%div
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^^^ text.haml meta.tag.haml entity.name.tag.haml
+>  :javascript
+#^^^^^^^^^^^^^ text.haml js.haml
+>    const c = LEFT_OPEN_BY_THE_STUB
+#^^^^^^^^^^^^^^ text.haml js.haml
+#              ^^^^^^^^^^^^^^^^^^^^^ text.haml js.haml meta.left-open.stub
+>  %p after a nested filter
+#^^ text.haml
+#  ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#   ^ text.haml meta.tag.haml entity.name.tag.haml
+#    ^^^^^^^^^^^^^^^^^^^^^^^ text.haml
+>

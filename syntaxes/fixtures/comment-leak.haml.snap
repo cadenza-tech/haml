@@ -1,0 +1,73 @@
+>-# A comment body is parsed as Haml, so anything Haml itself leaves open across lines sits above the
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>-# comment on the rule stack. The line after the comment must be a tag again.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>-# note
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^ text.haml comment.block.haml
+>  %div{ id: 1,
+#^^ text.haml comment.block.haml
+#  ^ text.haml comment.block.haml meta.tag.haml punctuation.definition.tag.haml
+#   ^^^ text.haml comment.block.haml meta.tag.haml entity.name.tag.haml
+#      ^ text.haml comment.block.haml meta.section.attributes.haml
+#       ^^^^^^^^ text.haml comment.block.haml meta.section.attributes.haml
+>%p after an open attribute hash
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml
+>-# note
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^ text.haml comment.block.haml
+>  %div[@post,
+#^^ text.haml comment.block.haml
+#  ^ text.haml comment.block.haml meta.tag.haml punctuation.definition.tag.haml
+#   ^^^ text.haml comment.block.haml meta.tag.haml entity.name.tag.haml
+#      ^ text.haml comment.block.haml meta.section.object.haml
+#       ^^^^^^^ text.haml comment.block.haml meta.section.object.haml
+>%p after an open object reference
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml
+>/ rendered comment
+#^ text.haml comment.block.haml punctuation.section.comment.haml
+# ^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>  %div{ id: 1,
+#^^ text.haml comment.block.haml
+#  ^ text.haml comment.block.haml meta.tag.haml punctuation.definition.tag.haml
+#   ^^^ text.haml comment.block.haml meta.tag.haml entity.name.tag.haml
+#      ^ text.haml comment.block.haml meta.section.attributes.haml
+#       ^^^^^^^^ text.haml comment.block.haml meta.section.attributes.haml
+>%p after a rendered comment
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml
+>-# note
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^ text.haml comment.block.haml
+>  text #{ open
+#^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>%p after an interpolation in a comment
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml
+>%div
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^^^ text.haml meta.tag.haml entity.name.tag.haml
+>  -# note
+#^^ text.haml comment.block.haml
+#  ^^ text.haml comment.block.haml punctuation.section.comment.haml
+#    ^^^^^^ text.haml comment.block.haml
+>    %div{ id: 1,
+#^^^^ text.haml comment.block.haml
+#    ^ text.haml comment.block.haml meta.tag.haml punctuation.definition.tag.haml
+#     ^^^ text.haml comment.block.haml meta.tag.haml entity.name.tag.haml
+#        ^ text.haml comment.block.haml meta.section.attributes.haml
+#         ^^^^^^^^ text.haml comment.block.haml meta.section.attributes.haml
+>  %p after a nested comment
+#^^ text.haml
+#  ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#   ^ text.haml meta.tag.haml entity.name.tag.haml
+#    ^^^^^^^^^^^^^^^^^^^^^^^^ text.haml
+>

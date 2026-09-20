@@ -1,0 +1,32 @@
+-# Every filter below leaves a construct of its embedded grammar open. The line after it must be a
+-# Haml tag again, and a filter nested under a tag must hand back to its sibling.
+:javascript
+  const a = LEFT_OPEN_BY_THE_STUB
+%p after javascript
+:coffee
+  a = LEFT_OPEN_BY_THE_STUB
+%p after coffee
+:markdown
+  LEFT_OPEN_BY_THE_STUB
+
+  still markdown
+%p after markdown
+:css
+  .a { LEFT_OPEN_BY_THE_STUB
+%p after css
+:scss
+  .a { LEFT_OPEN_BY_THE_STUB
+%p after scss
+:ruby
+  a = LEFT_OPEN_BY_THE_STUB
+%p after ruby
+:php
+  LEFT_OPEN_BY_THE_STUB
+%p after php
+%script
+  const b = LEFT_OPEN_BY_THE_STUB
+%p after script
+%div
+  :javascript
+    const c = LEFT_OPEN_BY_THE_STUB
+  %p after a nested filter

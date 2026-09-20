@@ -23,7 +23,7 @@
     },
     {
       "begin": "^(\\s*):ruby",
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "source.ruby.embedded.filter.haml",
       "patterns": [
         {
@@ -42,7 +42,7 @@
     },
     {
       "begin": "^(\\s*):javascript",
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "js.haml",
       "patterns": [
         {
@@ -52,7 +52,7 @@
     },
     {
       "begin": "^(\\s*)%script",
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "js.inline.haml",
       "patterns": [
         {
@@ -62,7 +62,7 @@
     },
     {
       "begin": "^(\\s*):ruby$",
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "source.ruby.embedded.filter.haml",
       "patterns": [
         {
@@ -86,7 +86,7 @@
           "name": "punctuation.section.comment.haml"
         }
       },
-      "end": "^(?!\\1\\s+|\\n)",
+      "while": "^(?=\\1\\s+|\\n)",
       "name": "comment.block.haml",
       "patterns": [
         {
@@ -218,7 +218,7 @@
     },
     {
       "begin": "^(\\s*):(ruby|opal)$",
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "source.ruby.embedded.filter.haml",
       "patterns": [
         {
@@ -228,7 +228,7 @@
     },
     {
       "begin": "^(\\s*):ruby$",
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "source.ruby.embedded.filter.haml",
       "patterns": [
         {
@@ -238,7 +238,7 @@
     },
     {
       "begin": "^(\\s*):(style|sass)$",
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "source.sass.embedded.filter.haml",
       "patterns": [
         {
@@ -248,7 +248,7 @@
     },
     {
       "begin": "^(\\s*):coffee(script)?",
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "source.coffee.embedded.filter.haml",
       "patterns": [
         {
@@ -258,7 +258,7 @@
     },
     {
       "begin": "^(\\s*):plain$",
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "text.plain.embedded.filter.haml",
       "patterns": [
         {
@@ -273,7 +273,7 @@
           "name": "keyword.control.filter.haml"
         }
       },
-      "end": "(?m:(?<=\\n)(?!\\1\\s+|$\\n*))",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "source.ruby.embedded.filter.haml",
       "patterns": [
         {
@@ -288,7 +288,7 @@
           "name": "keyword.control.filter.haml"
         }
       },
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "source.embedded.filter.sass",
       "patterns": [
         {
@@ -301,7 +301,7 @@
     },
     {
       "begin": "^(\\s*):(styles|sass)$",
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "source.sass.embedded.filter.haml",
       "patterns": [
         {
@@ -311,7 +311,7 @@
     },
     {
       "begin": "^(\\s*):plain$",
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "text.plain.embedded.filter.haml",
       "patterns": [
         {
@@ -341,7 +341,7 @@
     },
     {
       "begin": "^(\\s*)(:php)",
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "meta.embedded.php",
       "captures": {
         "2": {
@@ -356,7 +356,7 @@
     },
     {
       "begin": "^(\\s*)(:markdown)",
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "meta.embedded.markdown",
       "captures": {
         "2": {
@@ -371,7 +371,7 @@
     },
     {
       "begin": "^(\\s*)(:(css|styles?))$",
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "meta.embedded.css",
       "captures": {
         "2": {
@@ -386,7 +386,7 @@
     },
     {
       "begin": "^(\\s*)(:sass)$",
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "meta.embedded.sass",
       "captures": {
         "2": {
@@ -401,7 +401,7 @@
     },
     {
       "begin": "^(\\s*)(:scss)$",
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "meta.embedded.scss",
       "captures": {
         "2": {
@@ -421,7 +421,7 @@
           "name": "keyword.control.filter.haml"
         }
       },
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "meta.filter.escaped.haml",
       "patterns": [
         {
@@ -436,7 +436,7 @@
           "name": "keyword.control.filter.haml"
         }
       },
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "meta.filter.preserve.haml",
       "patterns": [
         {
@@ -451,7 +451,7 @@
           "name": "keyword.control.filter.haml"
         }
       },
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "meta.filter.cdata.haml",
       "patterns": [
         {

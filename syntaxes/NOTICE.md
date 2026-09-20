@@ -63,9 +63,34 @@ where the derived work lives in the published extension.
   none of its own. Handing it the whole body did not work: the body is markup, where Ruby reads the
   `%>` closing a tag as the start of a `%`-literal and an apostrophe as the start of a string, and
   because a filter's `end` is only tried while the filter is on top of the rule stack, the string
-  scope then ran to the end of the file. For the same reason it is the one filter written as
-  `begin`/`while` instead of `begin`/`end`: a tag still missing its `%>` - every tag, while it is
-  being typed - would otherwise take the rest of the file for Ruby.
+  scope then ran to the end of the file.
+- Every rule that takes an indented body — the filters, `%script` and the `-#` / `/` comment — is
+  written as `begin`/`while` (`^(?=\1\s+|$\n*)`) where upstream has `begin`/`end`
+  (`^(?!\1\s+|$\n*)`). The two tell a body line from what follows it in the same way, and against
+  the grammars VS Code ships — the real ones, registered from the built-in extensions, not the
+  stubs the snapshots use — every well-formed body tokenizes the same either way: checked over 757
+  documents, fifteen filters in twenty-five body shapes in two nestings, among them the ones whose grammars
+  anchor on `\G`, which is the one thing `while` sets and `end` does not (a Ruby heredoc, a nested
+  and lazily continued Markdown list, a fenced block, a quote, a `@media` block, SCSS nesting, a
+  `<?php ?>` tag, a JavaScript template literal). What `end` could not do is end the region
+  while something inside it is still open, because an `end` is only tried while its own rule is on
+  top of the rule stack: a `/*`, a template literal, or simply the `{` of a CSS rule still being
+  typed sat above the filter, and everything below was coloured as that construct to the end of the
+  file. A comment leaks through Haml's own rules rather than an embedded grammar's, since its body
+  includes `text.haml`: `-#` holding `%div{ id: 1,` greyed out the rest of the file. `while` is
+  asked of every line whatever is open, and pops it all — which also takes back the line after a
+  `:markdown` body, whose own paragraph rule used to claim the next, more shallowly indented Haml
+  line as a continuation. `src/test/pure/manifest.test.ts` pins the shape, and
+  `syntaxes/fixtures/filter-leak.haml` and `comment-leak.haml` are the snapshots.
+- Upstream carries the `:ruby`, `:sass` and `:plain` filters several times over, and which copy wins
+  is not simply the first. A rule whose every pattern includes an unregistered grammar is dropped
+  whole, so the `:sass` and `:style`/`:styles` copies that include nothing but `source.sass` — which
+  no stock VS Code registers — never run at all; `:sass` is scoped by the one copy that also includes
+  `#interpolated_ruby`, and `:style`/`:styles` fall through to the `meta.embedded.css` rule. Among
+  the copies that survive, the first at a position wins, which the `keyword.control.filter.haml`
+  capture makes visible: `:ruby` does not get it, and the only `:ruby` rule that grants it is the
+  fourth. The duplicates are converted along with the rest so that the rule above holds without an
+  exception.
 - `interpolated_ruby`'s two rules began at a bare `#{`, so `\#{...}` was scoped as live Ruby. Haml
   renders that literally — in filters as well as in plain text — so both rules, and the injection
   below, now require that the `#` is not escaped.

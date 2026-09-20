@@ -1,6 +1,12 @@
 {
-  "$comment": "Test-only stub. vscode-textmate drops a whole pattern when its include target is not registered, so the vendored grammar's filter regions would be untestable without these.",
+  "$comment": "Test-only stub. vscode-textmate drops a whole pattern when its include target is not registered, so the vendored grammar's filter regions would be untestable without these. Its one rule stands for whatever the real grammar can leave open across lines - a block comment, a template literal - and opens only on a word that no fixture but filter-leak.haml holds.",
   "scopeName": "source.css.scss",
   "name": "source.css.scss",
-  "patterns": []
+  "patterns": [
+    {
+      "begin": "LEFT_OPEN_BY_THE_STUB",
+      "end": "CLOSED_BY_THE_STUB",
+      "name": "meta.left-open.stub"
+    }
+  ]
 }
