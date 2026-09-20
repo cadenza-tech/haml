@@ -466,11 +466,37 @@
           "name": "keyword.control.filter.haml"
         }
       },
-      "end": "^(?!\\1\\s+|$\\n*)",
+      "while": "^(?=\\1\\s+|$\\n*)",
       "name": "meta.filter.erb.haml",
       "patterns": [
         {
-          "include": "source.ruby"
+          "begin": "<%#",
+          "end": "%>",
+          "name": "comment.block.erb.haml"
+        },
+        {
+          "begin": "<%(?!%)[-=]?",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.embedded.begin.erb.haml"
+            }
+          },
+          "end": "-?%>",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.embedded.end.erb.haml"
+            }
+          },
+          "contentName": "source.ruby.embedded.erb.haml",
+          "patterns": [
+            {
+              "match": "#.*?(?=-?%>)",
+              "name": "comment.line.number-sign.ruby"
+            },
+            {
+              "include": "source.ruby"
+            }
+          ]
         }
       ]
     }

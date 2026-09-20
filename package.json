@@ -87,7 +87,7 @@
           "source.ruby.embedded.filter.haml": "ruby",
           "source.ruby.embedded.source": "ruby",
           "source.ruby.embedded.html": "ruby",
-          "meta.filter.erb.haml": "ruby",
+          "source.ruby.embedded.erb.haml": "ruby",
           "js.haml": "javascript",
           "js.inline.haml": "javascript",
           "meta.embedded.css": "css",

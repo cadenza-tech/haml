@@ -45,7 +45,14 @@ where the derived work lives in the published extension.
 - Patterns were added for the `:escaped`, `:preserve`, `:cdata`, and `:erb` filters, which upstream
   has no pattern for at all. (Upstream's README acknowledges `:preserve` as a known bug.) They are
   scoped `meta.filter.<name>.haml`; `:escaped`, `:preserve`, and `:cdata` include `#interpolated_ruby`
-  because Haml interpolates `#{}` inside them, and `:erb` includes `source.ruby`.
+  because Haml interpolates `#{}` inside them. `:erb` hands only the inside of a `<% %>` tag to
+  `source.ruby`, the shape the ERB grammar shipped with vscode-ruby and Ruby LSP has; VS Code has
+  none of its own. Handing it the whole body did not work: the body is markup, where Ruby reads the
+  `%>` closing a tag as the start of a `%`-literal and an apostrophe as the start of a string, and
+  because a filter's `end` is only tried while the filter is on top of the rule stack, the string
+  scope then ran to the end of the file. For the same reason it is the one filter written as
+  `begin`/`while` instead of `begin`/`end`: a tag still missing its `%>` - every tag, while it is
+  being typed - would otherwise take the rest of the file for Ruby.
 - `interpolated_ruby`'s two rules began at a bare `#{`, so `\#{...}` was scoped as live Ruby. Haml
   renders that literally — in filters as well as in plain text — so both rules, and the injection
   below, now require that the `#` is not escaped.
