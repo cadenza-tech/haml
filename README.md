@@ -24,7 +24,7 @@
 - Diagnostics from [haml-lint](https://github.com/sds/haml-lint), with each linter name linking to its documentation
 - Format on save through haml-lint's auto-correct, enabled out of the box and a complete no-op when haml-lint is not available
 - Quick Fixes to disable a linter for a block, and a file-level "Fix all auto-correctable Haml offenses" source action
-- Go to Definition and completion for the partial a `render` call names, resolved the way Rails resolves it
+- Go to Definition and completion for the partial a `render` call names
 - Selection refactorings: wrap in a conditional or a Ruby block, and extract to a new partial
 - Completion for the `data-*` attributes Turbo, Stimulus and Rails UJS define, in all three Haml notations
 - Snippets for Haml control flow, filters, doctypes and comments
@@ -154,8 +154,7 @@ triggering suggestions on an empty line lists none of them — type the first le
 nothing to configure and no Ruby process is involved — only file names are read, so both work in an
 untrusted workspace too.
 
-The name resolves the way Rails resolves it, against the `app/views` directory that contains the
-current file:
+The name is resolved against the `app/views` directory that contains the current file:
 
 | Written | Opens |
 | - | - |
@@ -164,6 +163,10 @@ current file:
 | `= render partial: 'shared/foo'` | the same as the first form |
 | `= render layout: 'shared/foo' do` | the same as the first form |
 
+A name without a slash is a best guess. Rails looks it up under the prefixes of whichever controller
+renders the view, which a file on its own does not say; beside the current file is where that is for a
+view in its controller's own directory, so it is tried first.
+
 `.haml` is preferred over `.erb`, and the current file's own format over `html`: from
 `index.turbo_stream.haml`, `= render 'shared/foo'` opens `_foo.turbo_stream.haml` when it exists and
 falls back to `_foo.html.haml` when it does not.
@@ -171,8 +174,11 @@ falls back to `_foo.html.haml` when it does not.
 `= render template: 'posts/index'` is deliberately not followed. A template resolves without the
 leading underscore, so treating it as a partial would point at a file that is not there.
 
-Completion offers a partial that sits beside the current file under its bare name, and everything else
-under its `app/views`-relative name, which is what Rails needs in each case. Turn it off with:
+Completion always inserts the `app/views`-relative name, also for a partial beside the current file:
+`render 'sidebar'` only resolves from a view in the rendering controller's own directory - from
+`shared/` or a layout it is a missing partial - while `render 'posts/sidebar'` resolves from anywhere.
+Typing just `side` still finds it, and until something is typed the partials beside the current file
+are listed first. Turn it off with:
 
 ```jsonc
 "haml.completions.partials": false

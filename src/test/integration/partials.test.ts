@@ -61,8 +61,9 @@ suite('partial navigation integration Test Suite', () => {
     const document = await openView(INDEX);
     const labels = labelsOf(await completionsAt(document, "= render 'shared/fo"));
     assert.ok(labels.includes('shared/foo'), labels.join(' '));
-    // Beside the document, so it is offered under the bare name Rails would resolve.
-    assert.ok(labels.includes('sidebar'), labels.join(' '));
+    // Beside the document, and still under the name that resolves from every controller.
+    assert.ok(labels.includes('posts/sidebar'), labels.join(' '));
+    assert.ok(!labels.includes('sidebar'), labels.join(' '));
   });
 
   test('should complete through a trigger character', async () => {
