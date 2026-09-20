@@ -1,5 +1,6 @@
 // Diagnostic collection, listeners and debouncing.
 
+import * as path from 'node:path';
 import * as vscode from 'vscode';
 import type { LintRunner } from './client';
 import { snapshotOf } from './documentSnapshot';
@@ -17,9 +18,17 @@ function toSeverity(severity: 'error' | 'warning'): vscode.DiagnosticSeverity {
 /**
  * haml-lint's own top-level `exclude:` never applies to a --stdin run, and .haml-lint.yml is ERB so
  * it cannot be parsed to reproduce it. This is the honest replacement.
+ *
+ * A string glob in a DocumentFilter is matched against the absolute path, so `vendor/**` - the shape
+ * an `exclude:` entry has - would never match anything. Anchoring a relative pattern to the
+ * workspace folder is what makes it mean what it says; `**` patterns match the same either way.
  */
 function isExcluded(document: vscode.TextDocument, patterns: readonly string[]): boolean {
-  return patterns.some((pattern) => vscode.languages.match({ pattern }, document) > 0);
+  const folder = vscode.workspace.getWorkspaceFolder(document.uri);
+  return patterns.some((pattern) => {
+    const anchored = folder === undefined || path.isAbsolute(pattern) ? pattern : new vscode.RelativePattern(folder, pattern);
+    return vscode.languages.match({ pattern: anchored }, document) > 0;
+  });
 }
 
 export class DiagnosticsController implements vscode.Disposable {

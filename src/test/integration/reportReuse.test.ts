@@ -209,6 +209,21 @@ suite('report reuse Test Suite', () => {
     controller.dispose();
   });
 
+  // haml-lint's own `exclude:` entries are relative to the config, and README sends users here with
+  // them. A string glob in a DocumentFilter is matched against the absolute path, where
+  // `app/views/legacy/**` can never match - so the setting did nothing, and said nothing.
+  test('should honour an exclude pattern relative to the workspace folder', async () => {
+    const excluding = config({ lintExclude: ['app/views/offenses.haml'] });
+    const runner = stubLintRunner(() => ({ ok: true, outcome: { report: ONE_OFFENSE } }));
+    const controller = new DiagnosticsController(runner, logger, () => excluding, notice());
+    const document = await openView('offenses.haml');
+
+    await controller.lint(document, excluding);
+
+    assert.strictEqual(runner.modes.length, 0, 'an excluded file must not be linted');
+    controller.dispose();
+  });
+
   // Switching lint.run off disarms the debounce timer, but a run already in flight has nothing to
   // trip its staleness check on - same version, same generation. Its result must not repopulate the
   // panel the user just switched off, and must not leave a digest behind that a later lint would

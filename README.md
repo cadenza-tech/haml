@@ -212,7 +212,7 @@ Rails snippets never spawn anything either, but `auto` does read `Gemfile.lock` 
 | - | - | - |
 | `haml.lint.run` | `onSave` | When to run diagnostics: `onSave` (also on open), `onType`, or `off`. |
 | `haml.lint.debounceMs` | `500` | Debounce in milliseconds while typing. Only used when `haml.lint.run` is `onType`. |
-| `haml.lint.exclude` | `[]` | Glob patterns of files to skip. See [Known Limitations](#known-limitations). |
+| `haml.lint.exclude` | `[]` | Glob patterns of files to skip, relative to the workspace folder. See [Known Limitations](#known-limitations). |
 | `haml.formatter` | `auto` | Auto-correct mode: `auto`, `safe` (`haml-lint -a`), `all` (`haml-lint -A`), or `none`. |
 | `haml.hamlLint.executablePath` | `null` | Absolute path to the haml-lint executable, or a bare command name resolved on `PATH`; relative paths are refused. Skips bundler detection when set. |
 | `haml.hamlLint.useBundler` | `auto` | Whether to run through `bundle exec`: `auto`, `always`, or `never`. |

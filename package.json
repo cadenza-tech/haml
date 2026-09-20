@@ -224,7 +224,7 @@
           },
           "default": [],
           "scope": "resource",
-          "markdownDescription": "Glob patterns of files to skip. haml-lint's own top-level `exclude:` is not applied when linting from stdin, so use this instead."
+          "markdownDescription": "Glob patterns of files to skip. haml-lint's own top-level `exclude:` is not applied when linting from stdin, so use this instead. A relative pattern such as `vendor/**/*.haml` is resolved against the workspace folder."
         },
         "haml.formatter": {
           "type": "string",
