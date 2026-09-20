@@ -38,6 +38,16 @@ suite('pure/renderPartial Test Suite', () => {
       assert.strictEqual(nameAt("%p= render( 'x|' )"), 'x');
     });
 
+    // `~` is output that keeps the whitespace of a <pre> or a <textarea>, which is what a partial
+    // holding one is rendered with. Haml takes it wherever it takes `=` (rendered with haml 6.4).
+    test('should take a call behind the whitespace-preserving marker', () => {
+      assert.strictEqual(nameAt("~ render 'shared/foo|'"), 'shared/foo');
+      assert.strictEqual(nameAt("  ~ render partial: 'x|'"), 'x');
+      assert.strictEqual(nameAt("%div~ render 'x|'"), 'x');
+      assert.strictEqual(nameAt("!~ render 'x|'"), 'x');
+      assert.strictEqual(nameAt("%p ~ render 'x|'"), null, 'after a space it is text');
+    });
+
     test('should take the partial keyword', () => {
       assert.strictEqual(nameAt("= render partial: 'shared/foo|'"), 'shared/foo');
       assert.strictEqual(nameAt("= render(partial: 'x|')"), 'x');

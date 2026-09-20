@@ -125,12 +125,14 @@ function classifyHead(head: string): Pick<CompletionWord, 'marker' | 'markerLeng
   if (head[end - 1] === '-') {
     return isBlankText(head.slice(0, end - 1)) ? marker(head, end - 1, true) : null;
   }
-  if (head[end - 1] !== '=') {
+  // `~` is output that preserves whitespace, and Haml takes it wherever it takes `=`.
+  const last = head[end - 1];
+  if (last !== '=' && last !== '~') {
     return null;
   }
 
-  let runStart = end;
-  while (runStart > 0 && head[runStart - 1] === '=') {
+  let runStart = end - 1;
+  while (last === '=' && runStart > 0 && head[runStart - 1] === '=') {
     runStart--;
   }
   let headerEnd = runStart;
@@ -170,6 +172,11 @@ export function computeReplaceLength(word: CompletionWord, body: string): number
   if (word.markerLength === 0) {
     // Nothing but the identifier: only a body that supplies its own marker yields a valid line.
     return carriesMarker ? word.identifierLength : null;
+  }
+  // No body is written with `~`, and putting a body's own marker in its place would silently stop
+  // the line preserving whitespace. The marker is recognised for src/pure/renderPartial.ts.
+  if (carriesMarker && word.marker.startsWith('~')) {
+    return null;
   }
   // A tag already opened the line, so `%p- cache` (a tag literally named `p-`) and the illegal
   // nesting of `%p= form_with ... do` are both out.
