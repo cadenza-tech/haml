@@ -3,10 +3,11 @@
 import type { DocumentSnapshot, Eol } from '../../pure/textModel';
 
 /**
- * Counts space and tab only, which is what vscode.TextLine.firstNonWhitespaceCharacterIndex does.
+ * Counts space and tab only, which is what snapshotOf in src/documentSnapshot.ts does - and not
+ * what vscode.TextLine.firstNonWhitespaceCharacterIndex does, which is `\s`-based.
  *
  * The copies this replaces used `/\S/`, which additionally treats \v, \f and NBSP as whitespace - so
- * a line like "%p" reported 1 here and 0 in the editor. src/test/integration/documentSnapshot
+ * a line like "%p" reported 1 here and 0 through snapshotOf. src/test/integration/documentSnapshot
  * pins the two against each other, and this is the definition that lets it hold.
  */
 function firstNonWhitespaceCharacterIndex(text: string): number {

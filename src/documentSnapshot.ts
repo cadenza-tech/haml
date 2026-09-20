@@ -5,6 +5,7 @@
 // it has to check document.version itself - splitToPartial does, around its name prompt.
 
 import * as vscode from 'vscode';
+import { skipSpaces } from './pure/characters';
 import { findViewsRoot } from './pure/partialPaths';
 import type { DocumentSnapshot, Eol } from './pure/textModel';
 
@@ -12,8 +13,11 @@ export function snapshotOf(document: vscode.TextDocument): DocumentSnapshot {
   return {
     lineCount: document.lineCount,
     lineAt: (index) => {
-      const line = document.lineAt(index);
-      return { text: line.text, firstNonWhitespaceCharacterIndex: line.firstNonWhitespaceCharacterIndex };
+      const { text } = document.lineAt(index);
+      // Not TextLine's own value: that is `/^\s*/`, which takes U+3000 and NBSP for indentation. Haml
+      // indents with space and tab only and renders those as content, so a line led by one would get
+      // a disable comment written after it, and be read as a child of the sibling above it.
+      return { text, firstNonWhitespaceCharacterIndex: skipSpaces(text, 0) };
     }
   };
 }

@@ -198,7 +198,7 @@ suite('pure/lineRange Test Suite', () => {
     });
   });
 
-  // isBlankText counts space and tab only, matching VS Code's firstNonWhitespaceCharacterIndex.
+  // isBlankText counts space and tab only, matching a LineSnapshot's firstNonWhitespaceCharacterIndex.
   // Under the old trim() definition a NBSP line was blank *and* reported indent 0, which made its
   // indent width infinite for a line that renders as content.
   suite('exotic whitespace', () => {

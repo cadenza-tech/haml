@@ -100,8 +100,8 @@ export function skipSpaces(text: string, from: number): number {
 /**
  * True when `text` holds nothing but spaces and tabs.
  *
- * Deliberately narrower than `text.trim() === ''`: VS Code's own firstNonWhitespaceCharacterIndex -
- * the other half of a LineSnapshot - counts space and tab only, and Haml rejects anything else as
+ * Deliberately narrower than `text.trim() === ''`: firstNonWhitespaceCharacterIndex - the other
+ * half of a LineSnapshot - counts space and tab only, and Haml rejects anything else as
  * indentation. Under the trim definition a line holding one NBSP reports index 0 *and* blank, which
  * makes its indent width infinite for a line that renders as content.
  */
