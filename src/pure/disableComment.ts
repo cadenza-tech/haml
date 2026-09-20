@@ -11,6 +11,7 @@
 //
 // The marker therefore goes after the whole block, never after the single line.
 
+import { extendBlock, findBlockStart } from './blockStructure';
 import { isBlankText } from './characters';
 import { DIAGNOSTIC_SOURCE } from './diagnosticMapper';
 import type { DocumentSnapshot, Eol } from './textModel';
@@ -29,24 +30,12 @@ function indentWidth(text: string, firstNonWhitespaceCharacterIndex: number): nu
  * Finds the last line belonging to the block that starts at `lineIndex`.
  *
  * Blank lines never end a block on their own - they are only excluded when nothing deeper follows -
- * so a stanza split by an empty line stays intact.
+ * so a stanza split by an empty line stays intact. An `- else` at the line's own indent belongs to it
+ * too; src/pure/blockStructure.ts has the rule.
  */
 export function findBlockEnd(lineIndex: number, document: DocumentSnapshot): number {
   const target = document.lineAt(lineIndex);
-  const targetIndent = indentWidth(target.text, target.firstNonWhitespaceCharacterIndex);
-  let blockEnd = lineIndex;
-
-  for (let index = lineIndex + 1; index < document.lineCount; index++) {
-    const line = document.lineAt(index);
-    if (isBlankText(line.text)) {
-      continue;
-    }
-    if (indentWidth(line.text, line.firstNonWhitespaceCharacterIndex) <= targetIndent) {
-      break;
-    }
-    blockEnd = index;
-  }
-  return blockEnd;
+  return extendBlock(lineIndex, indentWidth(target.text, target.firstNonWhitespaceCharacterIndex), document);
 }
 
 /**
@@ -80,11 +69,14 @@ function insertionIndent(lineIndex: number, document: DocumentSnapshot): string 
 
 /** Returns the two insertions that wrap a block in a haml-lint disable/enable pair. */
 export function buildDisableComment(lineIndex: number, linterName: string, document: DocumentSnapshot, eol: Eol): [InsertionSpec, InsertionSpec] {
-  const indent = insertionIndent(lineIndex, document);
-  const blockEnd = findBlockEnd(lineIndex, document);
+  // An offense on an `- else` is wrapped from the `- if` it belongs to: a comment directly above the
+  // `- else` would sit between the two, which Haml rejects.
+  const startLine = findBlockStart(lineIndex, document);
+  const indent = insertionIndent(startLine, document);
+  const blockEnd = findBlockEnd(startLine, document);
 
   const disable: InsertionSpec = {
-    line: lineIndex,
+    line: startLine,
     character: 0,
     text: `${indent}-# haml-lint:disable ${linterName}${eol}`
   };

@@ -56,6 +56,16 @@ suite('pure/disableComment Test Suite', () => {
     test('should treat deeper tab indentation as nesting', () => {
       assert.strictEqual(findBlockEnd(0, snapshotOfLines(['%div', '\t%img', '%footer'])), 1);
     });
+
+    // Ruby's mid-block keywords sit at the opener's own indent, so "this line plus everything
+    // deeper" stops short of them.
+    test('should run through an else at the indent of the if it belongs to', () => {
+      assert.strictEqual(findBlockEnd(0, snapshotOfLines(['- if a', '  %p x', '- elsif b', '  %p y', '- else', '  %p z', '%footer'])), 5);
+    });
+
+    test('should not take an identifier that merely starts like a keyword for one', () => {
+      assert.strictEqual(findBlockEnd(0, snapshotOfLines(['- if a', '  %p x', '- else_branch = 1', '- when_ready'])), 1);
+    });
   });
 
   suite('buildDisableComment', () => {
@@ -71,6 +81,94 @@ suite('pure/disableComment Test Suite', () => {
         '    %span Hello',
         '  -# haml-lint:enable AltText',
         '  %footer'
+      ]);
+    });
+
+    // All four shapes below were checked against haml 6.4: a comment between an `if` body and its
+    // `else`, or between a `begin` body and its `rescue`, is a syntax error; one between `case` and its
+    // first `when` is too; and one between two `when`s renders nothing at all without saying why.
+    test('should keep the enable comment out from between an if and its else', () => {
+      const lines = ['- if a', '  %p x', '- elsif b', '  %p y', '- else', '  %p z', '%footer'];
+      assert.deepStrictEqual(apply(lines, buildDisableComment(0, 'LineLength', snapshotOfLines(lines), '\n')), [
+        '-# haml-lint:disable LineLength',
+        '- if a',
+        '  %p x',
+        '- elsif b',
+        '  %p y',
+        '- else',
+        '  %p z',
+        '-# haml-lint:enable LineLength',
+        '%footer'
+      ]);
+    });
+
+    test('should wrap the whole conditional when the offense is on its else', () => {
+      const lines = ['%div', '  - if a', '    %p x', '  - else', '    %p y', '  %footer'];
+      assert.deepStrictEqual(apply(lines, buildDisableComment(3, 'LineLength', snapshotOfLines(lines), '\n')), [
+        '%div',
+        '  -# haml-lint:disable LineLength',
+        '  - if a',
+        '    %p x',
+        '  - else',
+        '    %p y',
+        '  -# haml-lint:enable LineLength',
+        '  %footer'
+      ]);
+    });
+
+    test('should keep a rescue and an ensure with their begin', () => {
+      const lines = ['- begin', '  %p x', '- rescue => e', '  %p y', '- ensure', '  %p z'];
+      assert.deepStrictEqual(apply(lines, buildDisableComment(2, 'RuboCop', snapshotOfLines(lines), '\n')), [
+        '-# haml-lint:disable RuboCop',
+        ...lines,
+        '-# haml-lint:enable RuboCop'
+      ]);
+    });
+
+    // Haml takes `- when` one level under `- case` as well as beside it.
+    test('should wrap the whole case when the offense is on a when nested under it', () => {
+      const lines = ['- case a', '  - when 1', '    %p one', '  - when 2', '    %p two', '%footer'];
+      assert.deepStrictEqual(apply(lines, buildDisableComment(3, 'LineLength', snapshotOfLines(lines), '\n')), [
+        '-# haml-lint:disable LineLength',
+        '- case a',
+        '  - when 1',
+        '    %p one',
+        '  - when 2',
+        '    %p two',
+        '-# haml-lint:enable LineLength',
+        '%footer'
+      ]);
+    });
+
+    test('should wrap the whole case when the offense is on an else nested under it', () => {
+      const lines = ['- y = case a', '  - when 1', '    %p one', '  - else', '    %p other', '%footer'];
+      assert.deepStrictEqual(apply(lines, buildDisableComment(3, 'LineLength', snapshotOfLines(lines), '\n')), [
+        '-# haml-lint:disable LineLength',
+        ...lines.slice(0, 5),
+        '-# haml-lint:enable LineLength',
+        '%footer'
+      ]);
+    });
+
+    test('should wrap the whole case when the offense is on a when beside it', () => {
+      const lines = ['- case a', '- when 1', '  %p one', '- when 2', '  %p two', '%footer'];
+      assert.deepStrictEqual(apply(lines, buildDisableComment(3, 'LineLength', snapshotOfLines(lines), '\n')), [
+        '-# haml-lint:disable LineLength',
+        ...lines.slice(0, 5),
+        '-# haml-lint:enable LineLength',
+        '%footer'
+      ]);
+    });
+
+    test('should still wrap a line inside a branch on its own', () => {
+      const lines = ['- if a', '  %p x', '- else', '  %p y'];
+      assert.deepStrictEqual(apply(lines, buildDisableComment(1, 'LineLength', snapshotOfLines(lines), '\n')), [
+        '- if a',
+        '  -# haml-lint:disable LineLength',
+        '  %p x',
+        '  -# haml-lint:enable LineLength',
+        '- else',
+        '  %p y'
       ]);
     });
 
