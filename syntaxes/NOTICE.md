@@ -99,7 +99,10 @@ where the derived work lives in the published extension.
   the copies that survive, the first at a position wins, which the `keyword.control.filter.haml`
   capture makes visible: `:ruby` does not get it, and the only `:ruby` rule that grants it is the
   fourth. The duplicates are converted along with the rest so that the rule above holds without an
-  exception.
+  exception. Which copy wins is nothing the snapshots can see — the harness stubs every scope, so a
+  rule it keeps alive is dropped in a real editor — and reordering the duplicates would take the
+  `:sass` region away without one noticing; `src/test/pure/manifest.test.ts` pins that every filter
+  still has a copy that survives.
 - `interpolated_ruby`'s two rules began at a bare `#{`, so `\#{...}` was scoped as live Ruby. Haml
   renders that literally — in filters as well as in plain text — so both rules, and the injection
   below, now require that the `#` is not escaped.
