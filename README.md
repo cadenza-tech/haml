@@ -91,7 +91,7 @@ These are contributed defaults, so your own settings always win. To turn formatt
 "haml.formatter": "none"
 ```
 
-If you prefer the code-actions-on-save style instead, note that it runs the same auto-correct — there is no reason to enable both:
+If you prefer the code-actions-on-save style instead, note that it runs the same auto-correct — there is no reason to enable both. With both on, every save waits for two haml-lint runs instead of one and ends up with the same text:
 
 ```jsonc
 // VS Code 1.85 and newer
