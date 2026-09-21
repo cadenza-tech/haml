@@ -166,6 +166,34 @@ suite('package.json manifest Test Suite', () => {
       }
     });
 
+    // An interpolation belongs to the line it is written on. Without the `$` a `#{` still being typed
+    // opened a Ruby region that ran to whatever line finally held a `}`. The brace is the leftmost
+    // match, so a complete interpolation pays nothing; the nested-brace rules need the bound as much,
+    // since while a `{` inside is open the outer `end` is never tried.
+    //
+    // Both files: the injection is excluded from `comment`, so inside a `-#` body it is the grammar's
+    // own `interpolated_ruby` that opens the region, and only these two rules bound it there.
+    test('should end every interpolation at its brace or its line', () => {
+      const injection = readJson('syntaxes', 'haml-interpolation.injection.json') as {
+        patterns: { begin?: string; end?: string }[];
+        repository: Record<string, { begin?: string; end?: string }>;
+      };
+      const grammar = readJson('syntaxes', 'haml.tmLanguage.json') as {
+        repository: Record<string, { patterns: { begin?: string; end?: string }[] } | undefined>;
+      };
+      const own = ['interpolated_ruby', 'nest_curly_and_self'].flatMap((key) => {
+        const rule = grammar.repository[key];
+        assert.ok(rule !== undefined, `the grammar no longer has a ${key} repository entry`);
+        return rule.patterns;
+      });
+      const regions = [...injection.patterns, ...Object.values(injection.repository), ...own].filter((rule) => rule.begin !== undefined);
+      assert.strictEqual(regions.length, 4, 'the two files no longer open a region for the interpolation and one for its braces');
+      for (const rule of regions) {
+        // The grammar's own rule captures the brace, so its end carries a group the injection's does not.
+        assert.ok(/^\(?\\\}\)?\|\$$/.test(rule.end ?? ''), `the rule beginning ${rule.begin} ends at ${rule.end}, which runs past its line`);
+      }
+    });
+
     // vscode-textmate silently drops an entire pattern when its include target is not registered,
     // so a grammar added without a stub makes the snapshots look unscoped rather than fail.
     test('should register every contributed grammar with the snapshot harness', () => {

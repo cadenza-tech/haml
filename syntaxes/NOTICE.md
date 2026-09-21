@@ -102,6 +102,23 @@ where the derived work lives in the published extension.
   because TextMate takes the leftmost match on a line and the embedded grammar's rules start
   earlier; once its begin/end rules are entered, the filter's patterns no longer apply inside them.
   An injection applies at every level of the scope stack, which is why it is the right mechanism.
+- Every interpolation region — `interpolated_ruby`'s and the injection's, and the nested-brace rule
+  that each carries — ends at `\}|$`, the brace or the end of the line, where upstream ends at the
+  brace alone. An interpolation belongs to the line it is written on, and without the `$` a `#{`
+  still being typed opened a Ruby region that ran to whatever line finally held a `}`, colouring
+  everything between. The `$` costs nothing on a complete interpolation, because the brace is the
+  leftmost match — checked over 17 well-formed documents against the grammars VS Code ships, where
+  not one token changed. The nested-brace rules need it as much as the outer ones: while a `{`
+  inside the interpolation is open, it is the rule on top of the stack and the outer `end` is never
+  tried, the same reason the bodies above are bounded by `while`. The injection is excluded from
+  `comment`, so inside a `-#` body it is `interpolated_ruby` that opens the region and only its two
+  rules bound it there; both files are pinned. What the bound cannot reach is Ruby's own syntax:
+  `#{ h["`, `#{ a(1,` and `#{ <<~X` leave a rule of `source.ruby` open above these, and those still
+  run on — to the end of the file in plain text, to the end of the body inside a filter, whose
+  `while` pops them. What the bound gives up is the one
+  shape Haml does carry across lines: an interpolation left open inside an attribute value or a
+  filter body (`%div{ title: "a#{ 1 +` / `  2 }" }` renders `title='a3'`), whose continuation now
+  reads as Haml. `syntaxes/fixtures/interpolation-leak.haml` holds both sides of that trade.
 - `language-configuration.json`: the upstream `indentationRules.increaseIndentPattern` was
   `"^s*(([-%#\\:\\.\\=])|(.*sdo\b))\b[^{;]*$"`, which parses to
   `'^s*(([-%#\\:\\.\\=])|(.*sdo\x08))\x08[^{;]*$'` — `\s` had lost its backslash and each `\b`

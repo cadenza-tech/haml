@@ -9,7 +9,7 @@
       "beginCaptures": {
         "0": { "name": "punctuation.section.embedded.begin.haml" }
       },
-      "end": "\\}",
+      "end": "\\}|$",
       "endCaptures": {
         "0": { "name": "punctuation.section.embedded.end.haml" }
       },
@@ -19,9 +19,9 @@
   ],
   "repository": {
     "nested_braces": {
-      "$comment": "Keeps #{ {a: 1} } from ending at the inner closing brace.",
+      "$comment": "Keeps #{ {a: 1} } from ending at the inner closing brace. It needs the end-of-line bound as much as the rule above: while a { inside the interpolation is open, it is the rule on top of the stack and the outer end is never tried.",
       "begin": "\\{",
-      "end": "\\}",
+      "end": "\\}|$",
       "patterns": [{ "include": "#nested_braces" }, { "include": "source.ruby" }]
     }
   }

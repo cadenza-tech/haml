@@ -531,7 +531,7 @@
               "name": "punctuation.section.embedded.ruby"
             }
           },
-          "end": "(\\})",
+          "end": "(\\})|$",
           "name": "source.ruby.embedded.source",
           "patterns": [
             {
@@ -570,7 +570,7 @@
               "name": "punctuation.section.scope.ruby"
             }
           },
-          "end": "\\}",
+          "end": "\\}|$",
           "patterns": [
             {
               "include": "#nest_curly_and_self"
