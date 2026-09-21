@@ -139,4 +139,52 @@
 #^ text.haml meta.tag.haml punctuation.definition.tag.haml
 # ^ text.haml meta.tag.haml entity.name.tag.haml
 #  ^^^^^^^^^^^^^^^ text.haml
+>-# A trailing space after a Ruby comment must not cost the next line its own reading: the comment
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>-# pattern used to swallow the spaces, leaving the end nothing to match behind.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>- a = 1 # note 
+#^ text.haml meta.line.ruby.haml
+# ^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#        ^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml comment.line.number-sign.ruby
+#              ^ text.haml meta.line.ruby.haml
+>%p after a padded comment
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^ text.haml
+>- items.each do |item| # every one 
+#^ text.haml meta.line.ruby.haml
+# ^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#             ^^ text.haml meta.line.ruby.haml source.ruby.embedded.html keyword.control.ruby.start-block
+#               ^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.html
+#                      ^ text.haml meta.line.ruby.haml
+#                       ^^^^^^^^^^^^ text.haml meta.line.ruby.haml comment.line.number-sign.ruby
+>  %li= item
+#^^ text.haml
+#  ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#   ^^ text.haml meta.tag.haml entity.name.tag.haml
+#     ^ text.haml meta.line.ruby.haml
+#      ^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>%p after a padded block comment
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml
+>-# Haml strips the line before asking whether it carries on, so a trailing space after the comma
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>-# does not end the expression.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>= foo(1, 
+#^ text.haml meta.line.ruby.haml
+# ^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#       ^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml source.ruby
+>  2)
+#^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>%p after a padded comma
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^ text.haml
 >

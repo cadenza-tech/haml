@@ -52,6 +52,15 @@ where the derived work lives in the published extension.
   a `.class` line, whose begin matches nothing, is not closed where it opened): its `end` was a
   lookahead that a following `-#` or `/` line does not satisfy, so such a comment was read as more of
   the tag and its nested lines as live Haml.
+- `rubyline`'s Ruby-comment pattern, which upstream carries four times over, was `#.*$` — it took the
+  spaces after the comment as well. `rubyline`'s `end` has to see a non-space behind it
+  (`(?<=[^,\s])[ \t]*$`), and once the scan is past them it never can, so `- a = 1 # note ` with a
+  trailing space left the region to close on the `end`'s bare `^` at the next line, which cost that
+  line its own reading: `%p after` was plain text rather than a tag. It is now `#.*?(?=[ \t]*$)`,
+  which leaves the spaces where the `end` can see them. Any child pattern that reaches the end of the
+  line has this effect on an `end` anchored there; that is the constraint to keep in mind when adding
+  one. The one visible difference is that those trailing spaces now belong to the enclosing rule
+  rather than to the comment.
 - The `end` of the `:sass`, `:styles`/`:style` and `:plain` filters was `^(?=\1\s+|$\n*)`, a
   positive lookahead where a negative one was intended. The region closed on the first line that was
   indented under the filter, which is the first line of its body, so those bodies were never scoped.

@@ -33,3 +33,15 @@
 - capture do # nothing else
   %p captured
 %p after-comment
+-# A trailing space after a Ruby comment must not cost the next line its own reading: the comment
+-# pattern used to swallow the spaces, leaving the end nothing to match behind.
+- a = 1 # note 
+%p after a padded comment
+- items.each do |item| # every one 
+  %li= item
+%p after a padded block comment
+-# Haml strips the line before asking whether it carries on, so a trailing space after the comma
+-# does not end the expression.
+= foo(1, 
+  2)
+%p after a padded comma

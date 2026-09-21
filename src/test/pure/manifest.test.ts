@@ -194,6 +194,40 @@ suite('package.json manifest Test Suite', () => {
       }
     });
 
+    /**
+     * A child pattern that reaches the end of the line makes `rubyline`'s `end` unreachable: the end
+     * has to see a non-space behind it, and once the scan is past the spaces it never can. Pinned as
+     * strings because one backslash too few in either writes something that still parses and still
+     * matches most lines - `[^,\` plus the letter `s` stops ending a Ruby line that ends in an `s` -
+     * and no fixture would catch it.
+     */
+    test('should leave the whitespace a Ruby line ends on to the end that reads it', () => {
+      const grammar = readJson('syntaxes', 'haml.tmLanguage.json') as {
+        repository: Record<string, { end?: string; patterns?: { match?: string }[] } | undefined>;
+      };
+      assert.strictEqual(
+        grammar.repository.rubyline?.end,
+        '(((?<!\\w)do|\\{)(\\s*\\|[^|]*\\|)?)[ \\t]*(#.*)?$|(?<=[^,\\s])[ \\t]*$|^',
+        'the end no longer asks about the last character with only spaces and tabs behind it'
+      );
+      const comments = JSON.stringify(grammar.repository).match(/"match":"#[^"]*"/g) ?? [];
+      assert.ok(comments.length > 0, 'the Ruby comment pattern is gone from the repository');
+      for (const pattern of comments) {
+        assert.strictEqual(pattern, '"match":"#.*?(?=[ \\\\t]*$)"', 'a Ruby comment pattern consumes the spaces the end needs to see');
+      }
+    });
+
+    // The fixture's whole point is the space after a comment, which an editor that trims trailing
+    // whitespace removes without a word - leaving a snapshot that agrees with itself and tests
+    // nothing. .editorconfig asks editors not to; this notices when one did.
+    test('should keep the trailing whitespace the multi-line Ruby fixture is made of', () => {
+      const fixture = fs.readFileSync(path.join(ROOT, 'syntaxes', 'fixtures', 'multiline-ruby.haml'), 'utf8').split('\n');
+      for (const marker of [',', '# note', '# every one']) {
+        const padded = fixture.some((line) => line.endsWith(`${marker} `) || line.endsWith(`${marker}\t`));
+        assert.ok(padded, `no line ends in \`${marker}\` and whitespace any more, so the case it stands for is untested`);
+      }
+    });
+
     // vscode-textmate silently drops an entire pattern when its include target is not registered,
     // so a grammar added without a stub makes the snapshots look unscoped rather than fail.
     test('should register every contributed grammar with the snapshot harness', () => {

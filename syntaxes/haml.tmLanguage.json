@@ -680,7 +680,7 @@
             },
             {
               "comment": "Hack to let ruby comments work in this context properly",
-              "match": "#.*$",
+              "match": "#.*?(?=[ \\t]*$)",
               "name": "comment.line.number-sign.ruby"
             },
             {
@@ -711,7 +711,7 @@
             },
             {
               "comment": "Hack to let ruby comments work in this context properly",
-              "match": "#.*$",
+              "match": "#.*?(?=[ \\t]*$)",
               "name": "comment.line.number-sign.ruby"
             },
             {
@@ -721,7 +721,7 @@
         },
         {
           "comment": "Hack to let ruby comments work in this context properly",
-          "match": "#.*$",
+          "match": "#.*?(?=[ \\t]*$)",
           "name": "comment.line.number-sign.ruby"
         },
         {
@@ -785,7 +785,7 @@
         },
         {
           "comment": "Hack to let ruby comments work in this context properly",
-          "match": "#.*$",
+          "match": "#.*?(?=[ \\t]*$)",
           "name": "comment.line.number-sign.ruby"
         },
         {
