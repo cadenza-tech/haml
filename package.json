@@ -2,7 +2,7 @@
   "name": "haml",
   "displayName": "Haml",
   "description": "Haml language support with syntax highlighting, linting, and formatting powered by haml-lint",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "publisher": "cadenza-tech",
   "license": "MIT",
   "icon": "images/icon.png",
