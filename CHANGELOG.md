@@ -5,6 +5,13 @@ All notable changes to the "Haml" extension will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-09-23
+
+### Changed
+
+- Extension identifier: the extension is published as `cadenza-tech.vscode-haml`, because the Marketplace requires every extension name to be unique across publishers and `haml` has belonged to other publishers since 2016; the language id, the `haml.*` settings and the commands are unchanged, and the shipped `editor.defaultFormatter` default names the new identifier
+- Packaging: 1.0.0 reached Open VSX only, as `cadenza-tech.haml`; anyone who installed it there needs to install `cadenza-tech.vscode-haml` to keep receiving updates
+
 ## [1.0.0] - 2026-09-23
 
 ### Changed
@@ -111,6 +118,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Snippets: 239 Rails view helper snippets, offered only when the file belongs to a Rails project
 - Snippets: Haml control flow, filters, doctypes and comments
 
+[1.0.1]: https://github.com/cadenza-tech/haml/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/cadenza-tech/haml/compare/v0.0.2...v1.0.0
 [0.0.2]: https://github.com/cadenza-tech/haml/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/cadenza-tech/haml/compare/v0.0.0...v0.0.1

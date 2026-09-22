@@ -2,7 +2,7 @@
   "name": "vscode-haml",
   "displayName": "Haml",
   "description": "Haml language support with syntax highlighting, linting, and formatting powered by haml-lint",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "cadenza-tech",
   "license": "MIT",
   "icon": "images/icon.png",
