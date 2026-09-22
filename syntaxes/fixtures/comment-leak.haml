@@ -1,0 +1,18 @@
+-# A comment body is parsed as Haml, so anything Haml itself leaves open across lines sits above the
+-# comment on the rule stack. The line after the comment must be a tag again.
+-# note
+  %div{ id: 1,
+%p after an open attribute hash
+-# note
+  %div[@post,
+%p after an open object reference
+/ rendered comment
+  %div{ id: 1,
+%p after a rendered comment
+-# note
+  text #{ open
+%p after an interpolation in a comment
+%div
+  -# note
+    %div{ id: 1,
+  %p after a nested comment

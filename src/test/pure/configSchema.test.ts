@@ -104,4 +104,13 @@ suite('configSchema Test Suite', () => {
     assert.deepStrictEqual(normalizeConfig({ lintExclude: ['a', 42, '', '  ', null, 'b'] }).lintExclude, ['a', 'b']);
     assert.deepStrictEqual(normalizeConfig({ lintExclude: 'not an array' }).lintExclude, []);
   });
+
+  // A glob is matched character for character, so `"vendor/** "` - a space left behind in
+  // settings.json - excluded nothing, and nothing said so.
+  test('should trim the lintExclude entries it keeps', () => {
+    assert.deepStrictEqual(normalizeConfig({ lintExclude: [' vendor/** ', '\tapp/views/legacy/*.haml'] }).lintExclude, [
+      'vendor/**',
+      'app/views/legacy/*.haml'
+    ]);
+  });
 });

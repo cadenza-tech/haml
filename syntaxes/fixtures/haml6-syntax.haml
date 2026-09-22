@@ -55,3 +55,14 @@
         x = 1
       :erb
         <%= foo %>
+        <p>Don't</p>
+        <%# note %>
+        <%- bar -%>
+        <% baz # note %>
+      %p after-erb
+      :erb
+        <%= open
+      %p after-open-tag
+      :erb
+        <%# open
+      %p after-open-comment

@@ -50,13 +50,16 @@ export interface DataAttributeCompletion {
   readonly documentation: string;
 }
 
-/** One Rails view helper snippet. `contributes.snippets` cannot be toggled by a setting. */
-export interface RailsSnippet {
+/** A snippet the completion provider supplies, which is what lets it replace a marker already typed. */
+export interface ProvidedSnippet {
   readonly prefix: string;
   /** Lines joined with '\n'; SnippetString interprets them directly. */
   readonly body: string;
   readonly detail: string;
 }
+
+/** One Rails view helper snippet. `contributes.snippets` cannot be toggled by a setting. */
+export type RailsSnippet = ProvidedSnippet;
 
 export type OffenseSeverity = 'error' | 'warning';
 

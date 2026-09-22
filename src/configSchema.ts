@@ -89,7 +89,12 @@ function stringArray(value: unknown): readonly string[] {
   if (!Array.isArray(value)) {
     return [];
   }
-  return value.filter((entry): entry is string => typeof entry === 'string' && entry.trim() !== '');
+  // Trimmed as well as filtered: a glob is matched character for character, so a space left behind
+  // in settings.json makes the pattern match nothing, with no sign that it is being ignored.
+  return value
+    .filter((entry): entry is string => typeof entry === 'string')
+    .map((entry) => entry.trim())
+    .filter((entry) => entry !== '');
 }
 
 export function normalizeConfig(raw: RawConfig): HamlConfig {

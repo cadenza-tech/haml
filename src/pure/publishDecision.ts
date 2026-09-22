@@ -21,8 +21,8 @@ export function digestOf(text: string): string {
 /**
  * Whether the report already on screen answers this request.
  *
- * Keyed on content, never on the version: the report the formatter produces describes the document
- * as it will be *after* its edit lands, whose version cannot be known in advance. A settings change
+ * Keyed on content, never on the version: content is what a report is true of, so an undo back to
+ * the published text reuses it too, under a version that was never linted. A settings change
  * alters the answer without altering the text, so every path that changes settings must pass
  * `force` - that is the whole reason this takes the flag rather than inferring anything.
  */

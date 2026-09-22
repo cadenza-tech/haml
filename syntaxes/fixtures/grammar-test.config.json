@@ -24,12 +24,8 @@
         "path": "./stubs/source-ruby.tmLanguage.json"
       },
       {
-        "scopeName": "source.sass",
-        "path": "./stubs/source-sass.tmLanguage.json"
-      },
-      {
-        "scopeName": "source.scss",
-        "path": "./stubs/source-scss.tmLanguage.json"
+        "scopeName": "source.css.scss",
+        "path": "./stubs/source-css-scss.tmLanguage.json"
       },
       {
         "scopeName": "text.html.markdown",
@@ -38,10 +34,6 @@
       {
         "scopeName": "text.html.php",
         "path": "./stubs/text-html-php.tmLanguage.json"
-      },
-      {
-        "scopeName": "text.plain",
-        "path": "./stubs/text-plain.tmLanguage.json"
       },
       {
         "path": "../haml-interpolation.injection.json",

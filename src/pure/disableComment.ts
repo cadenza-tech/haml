@@ -11,6 +11,7 @@
 //
 // The marker therefore goes after the whole block, never after the single line.
 
+import { findConstructEnd, findConstructStart } from './blockStructure';
 import { isBlankText } from './characters';
 import { DIAGNOSTIC_SOURCE } from './diagnosticMapper';
 import type { DocumentSnapshot, Eol } from './textModel';
@@ -21,34 +22,6 @@ export interface InsertionSpec {
   readonly text: string;
 }
 
-function indentWidth(text: string, firstNonWhitespaceCharacterIndex: number): number {
-  return isBlankText(text) ? Number.POSITIVE_INFINITY : firstNonWhitespaceCharacterIndex;
-}
-
-/**
- * Finds the last line belonging to the block that starts at `lineIndex`.
- *
- * Blank lines never end a block on their own - they are only excluded when nothing deeper follows -
- * so a stanza split by an empty line stays intact.
- */
-export function findBlockEnd(lineIndex: number, document: DocumentSnapshot): number {
-  const target = document.lineAt(lineIndex);
-  const targetIndent = indentWidth(target.text, target.firstNonWhitespaceCharacterIndex);
-  let blockEnd = lineIndex;
-
-  for (let index = lineIndex + 1; index < document.lineCount; index++) {
-    const line = document.lineAt(index);
-    if (isBlankText(line.text)) {
-      continue;
-    }
-    if (indentWidth(line.text, line.firstNonWhitespaceCharacterIndex) <= targetIndent) {
-      break;
-    }
-    blockEnd = index;
-  }
-  return blockEnd;
-}
-
 /**
  * The indentation both comments are written at.
  *
@@ -56,7 +29,9 @@ export function findBlockEnd(lineIndex: number, document: DocumentSnapshot): num
  * and writing the pair at column 0 there is not neutral: the `enable` marker is a silent comment,
  * and anything after it indented deeper is swallowed out of the rendered output. The following
  * non-blank line's indent is the one level that can never swallow it; a trailing blank falls back
- * to the preceding line, after which nothing follows that could be swallowed at any indent.
+ * to the preceding line, after which nothing follows that could be swallowed at any indent - or
+ * rather to the first line of whatever that line is a part of. The last line of a filter body is
+ * indented like the body, and a comment written at that indent is emitted into the page with it.
  */
 function insertionIndent(lineIndex: number, document: DocumentSnapshot): string {
   const target = document.lineAt(lineIndex);
@@ -70,9 +45,9 @@ function insertionIndent(lineIndex: number, document: DocumentSnapshot): string 
     }
   }
   for (let index = lineIndex - 1; index >= 0; index--) {
-    const line = document.lineAt(index);
-    if (!isBlankText(line.text)) {
-      return line.text.slice(0, line.firstNonWhitespaceCharacterIndex);
+    if (!isBlankText(document.lineAt(index).text)) {
+      const owner = document.lineAt(findConstructStart(index, document));
+      return owner.text.slice(0, owner.firstNonWhitespaceCharacterIndex);
     }
   }
   return '';
@@ -80,11 +55,15 @@ function insertionIndent(lineIndex: number, document: DocumentSnapshot): string 
 
 /** Returns the two insertions that wrap a block in a haml-lint disable/enable pair. */
 export function buildDisableComment(lineIndex: number, linterName: string, document: DocumentSnapshot, eol: Eol): [InsertionSpec, InsertionSpec] {
-  const indent = insertionIndent(lineIndex, document);
-  const blockEnd = findBlockEnd(lineIndex, document);
+  // The pair goes around whatever the offending line is a part of, never into it: an `- else` is
+  // wrapped from its `- if`, a line of a filter body from the filter's header, and a later line of an
+  // attribute list from the tag. src/pure/blockStructure.ts has what each of those breaks otherwise.
+  const startLine = findConstructStart(lineIndex, document);
+  const indent = insertionIndent(startLine, document);
+  const blockEnd = findConstructEnd(startLine, document);
 
   const disable: InsertionSpec = {
-    line: lineIndex,
+    line: startLine,
     character: 0,
     text: `${indent}-# haml-lint:disable ${linterName}${eol}`
   };
@@ -121,15 +100,20 @@ export interface DisableActionPlan {
   readonly linterName: string;
 }
 
-/** Syntax and parse errors carry no linter, so nothing can be disabled for them. */
+/** Every haml-lint linter is a Ruby class, and its name is what the report carries. */
+const LINTER_NAME = /^[A-Za-z][A-Za-z0-9_]*$/;
+
+/**
+ * Syntax and parse errors carry no linter, so nothing can be disabled for them.
+ *
+ * Anything that is not a class name is refused as well. This is the one value from the process's
+ * output that gets written into the document, and the report is not trusted input: a workspace can
+ * put its own haml-lint on PATH, and a name holding a newline would let it choose a line of the
+ * template.
+ */
 export function linterNameOf(code: unknown): string | undefined {
-  if (typeof code === 'string') {
-    return code;
-  }
-  if (typeof code === 'object' && code !== null && 'value' in code) {
-    return String((code as { value: unknown }).value);
-  }
-  return undefined;
+  const name = typeof code === 'object' && code !== null && 'value' in code ? (code as { value: unknown }).value : code;
+  return typeof name === 'string' && LINTER_NAME.test(name) ? name : undefined;
 }
 
 /**

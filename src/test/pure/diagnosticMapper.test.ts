@@ -79,6 +79,39 @@ suite('pure/diagnosticMapper Test Suite', () => {
     assert.strictEqual(specs.length, 2);
   });
 
+  // An autocorrect run concatenates two passes, and a linter it may not correct under `-a` -
+  // SpaceBeforeScript, EmptyScript - records the same offense in both. With no column to tell them
+  // apart, the panel showed the entry twice after a format-on-save and once after opening the file.
+  test('should show an offense the report lists twice only once', () => {
+    const repeated = offense({ line: 2, message: 'The - symbol should have one space', linterName: 'SpaceBeforeScript' });
+    const specs = mapOffenses([repeated, offense({ line: 1 }), { ...repeated }], snapshot('%div', '  -foo'));
+    assert.deepStrictEqual(
+      specs.map((spec) => [spec.start.line, spec.message]),
+      [
+        [1, 'The - symbol should have one space'],
+        [0, 'm']
+      ]
+    );
+  });
+
+  // The line the offense names and the line it is drawn on are not the same thing: a correcting pass
+  // records pre-edit line numbers, so two of them can land past the end of the buffer and clamp onto
+  // the same line. Told apart by the line they name, the panel then draws one squiggle twice.
+  test('should show one squiggle for offenses that clamp onto the same line', () => {
+    const past = offense({ line: 9, message: 'm', linterName: 'RuboCop' });
+    const specs = mapOffenses([past, { ...past, line: 10 }], snapshot('%div', '%span'));
+    assert.deepStrictEqual(
+      specs.map((spec) => [spec.start.line, spec.message]),
+      [[1, 'm']]
+    );
+  });
+
+  test('should keep offenses that differ in line, linter, severity or message', () => {
+    const base = offense({ line: 1, message: 'm', linterName: 'A' });
+    const variants = [base, { ...base, line: 2 }, { ...base, linterName: 'B' }, { ...base, severity: 'error' as const }, { ...base, message: 'n' }];
+    assert.strictEqual(mapOffenses(variants, snapshot('%div', '%span')).length, variants.length);
+  });
+
   test('should return nothing for no offenses', () => {
     assert.deepStrictEqual(mapOffenses([], snapshot('%div')), []);
   });

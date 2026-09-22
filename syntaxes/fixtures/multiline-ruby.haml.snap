@@ -68,4 +68,123 @@
 #^ text.haml meta.tag.haml punctuation.definition.tag.haml
 # ^ text.haml meta.tag.haml entity.name.tag.haml
 #  ^^^^^^^^^^^^^^ text.haml
+>-# A pipe continued from a tag ends before the first line without one, like the bare form above.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>%p= link_to "Add to cart",       |
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^ text.haml meta.line.ruby.haml
+#   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#                                 ^ text.haml meta.line.ruby.haml source.ruby.embedded.haml punctuation.separator.continuation.haml
+>    :url => { :action => "add" } |
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#                                 ^ text.haml meta.line.ruby.haml source.ruby.embedded.haml punctuation.separator.continuation.haml
+>%p after-tag-pipe
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^ text.haml
+>-# The tag itself must be over by then too, or what follows it is read as more of the tag.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>%p= link_to "Add to cart",       |
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^ text.haml meta.line.ruby.haml
+#   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#                                 ^ text.haml meta.line.ruby.haml source.ruby.embedded.haml punctuation.separator.continuation.haml
+>    :url => { :action => "add" } |
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#                                 ^ text.haml meta.line.ruby.haml source.ruby.embedded.haml punctuation.separator.continuation.haml
+>-# a comment, with
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>  %b everything under it
+#^^ text.haml comment.block.haml
+#  ^ text.haml comment.block.haml meta.tag.haml punctuation.definition.tag.haml
+#   ^ text.haml comment.block.haml meta.tag.haml entity.name.tag.haml
+#    ^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>%p after-tag-pipe-comment
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^ text.haml
+>-# A comment after a block opener must not keep the line open.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>- items.each do |item| # every one
+#^ text.haml meta.line.ruby.haml
+# ^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#             ^^ text.haml meta.line.ruby.haml source.ruby.embedded.html keyword.control.ruby.start-block
+#               ^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.html
+#                      ^ text.haml meta.line.ruby.haml
+#                       ^^^^^^^^^^^ text.haml meta.line.ruby.haml comment.line.number-sign.ruby
+>  %li= item
+#^^ text.haml
+#  ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#   ^^ text.haml meta.tag.haml entity.name.tag.haml
+#     ^ text.haml meta.line.ruby.haml
+#      ^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>- capture do # nothing else
+#^ text.haml meta.line.ruby.haml
+# ^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#          ^^ text.haml meta.line.ruby.haml source.ruby.embedded.html keyword.control.ruby.start-block
+#            ^ text.haml meta.line.ruby.haml
+#             ^^^^^^^^^^^^^^ text.haml meta.line.ruby.haml comment.line.number-sign.ruby
+>  %p captured
+#^^ text.haml
+#  ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#   ^ text.haml meta.tag.haml entity.name.tag.haml
+#    ^^^^^^^^^^ text.haml
+>%p after-comment
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^ text.haml
+>-# A trailing space after a Ruby comment must not cost the next line its own reading: the comment
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>-# pattern used to swallow the spaces, leaving the end nothing to match behind.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>- a = 1 # note 
+#^ text.haml meta.line.ruby.haml
+# ^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#        ^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml comment.line.number-sign.ruby
+#              ^ text.haml meta.line.ruby.haml
+>%p after a padded comment
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^ text.haml
+>- items.each do |item| # every one 
+#^ text.haml meta.line.ruby.haml
+# ^^^^^^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#             ^^ text.haml meta.line.ruby.haml source.ruby.embedded.html keyword.control.ruby.start-block
+#               ^^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.html
+#                      ^ text.haml meta.line.ruby.haml
+#                       ^^^^^^^^^^^^ text.haml meta.line.ruby.haml comment.line.number-sign.ruby
+>  %li= item
+#^^ text.haml
+#  ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#   ^^ text.haml meta.tag.haml entity.name.tag.haml
+#     ^ text.haml meta.line.ruby.haml
+#      ^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>%p after a padded block comment
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml
+>-# Haml strips the line before asking whether it carries on, so a trailing space after the comma
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>-# does not end the expression.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>= foo(1, 
+#^ text.haml meta.line.ruby.haml
+# ^^^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+#       ^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml source.ruby
+>  2)
+#^^^^ text.haml meta.line.ruby.haml source.ruby.embedded.haml
+>%p after a padded comma
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^ text.haml
 >

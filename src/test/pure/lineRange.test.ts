@@ -45,8 +45,8 @@ suite('pure/lineRange Test Suite', () => {
       assert.deepStrictEqual(normalizeSelection(caret(1), document), { startLine: 1, endLine: 1 });
     });
 
-    // A cursor on a parent means the parent and its children, which is the same rule findBlockEnd
-    // exists for in disableComment.
+    // A cursor on a parent means the parent and its children, which is the same rule the disable
+    // quick fix follows when it places its comment pair.
     test('should take the whole block under a caret', () => {
       const document = snapshotOfLines(CARD);
       assert.deepStrictEqual(normalizeSelection(caret(1), document), { startLine: 1, endLine: 3 });
@@ -91,6 +91,39 @@ suite('pure/lineRange Test Suite', () => {
     test('should extend to the end of the shallowest line block', () => {
       const document = snapshotOfLines(CARD);
       assert.deepStrictEqual(normalizeSelection(whole(document, 0, 2), document), { startLine: 0, endLine: 4 });
+    });
+
+    // Wrapping an `if` without its `else` leaves valid Haml in which the else answers to the new
+    // outer conditional instead - nothing breaks, the page just renders something else. Extracting
+    // it leaves a dangling `- else`, which does break.
+    test('should take the else along with the if under a caret', () => {
+      const document = snapshotOfLines(['- if a', '  %p x', '- else', '  %p y', '%p after']);
+      assert.deepStrictEqual(normalizeSelection(caret(0), document), { startLine: 0, endLine: 3 });
+    });
+
+    test('should take the else along even when only the if branch was selected', () => {
+      const document = snapshotOfLines(['- if a', '  %p x', '- else', '  %p y', '%p after']);
+      assert.deepStrictEqual(normalizeSelection(whole(document, 0, 1), document), { startLine: 0, endLine: 3 });
+    });
+
+    test('should reach back to the if when the selection starts on its else', () => {
+      const document = snapshotOfLines(['%div', '  - if a', '    %p x', '  - else', '    %p y', '  %p after']);
+      assert.deepStrictEqual(normalizeSelection(caret(3), document), { startLine: 1, endLine: 4 });
+    });
+
+    test('should reach back to the case from a when nested under it', () => {
+      const document = snapshotOfLines(['- case a', '  - when 1', '    %p one', '  - when 2', '    %p two', '%p after']);
+      assert.deepStrictEqual(normalizeSelection(caret(3), document), { startLine: 0, endLine: 4 });
+    });
+
+    test('should reach back to the case from an else nested under it', () => {
+      const document = snapshotOfLines(['- case a', '  - when 1', '    %p one', '  - else', '    %p other', '%p after']);
+      assert.deepStrictEqual(normalizeSelection(caret(3), document), { startLine: 0, endLine: 4 });
+    });
+
+    test('should leave a selection inside one branch alone', () => {
+      const document = snapshotOfLines(['- if a', '  %p x', '  %p y', '- else', '  %p z']);
+      assert.deepStrictEqual(normalizeSelection(whole(document, 1, 2), document), { startLine: 1, endLine: 2 });
     });
 
     test('should trim blank lines from both ends', () => {
@@ -198,7 +231,7 @@ suite('pure/lineRange Test Suite', () => {
     });
   });
 
-  // isBlankText counts space and tab only, matching VS Code's firstNonWhitespaceCharacterIndex.
+  // isBlankText counts space and tab only, matching a LineSnapshot's firstNonWhitespaceCharacterIndex.
   // Under the old trim() definition a NBSP line was blank *and* reported indent 0, which made its
   // indent width infinite for a line that renders as content.
   suite('exotic whitespace', () => {

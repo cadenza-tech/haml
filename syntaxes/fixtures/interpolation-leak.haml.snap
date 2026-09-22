@@ -1,0 +1,130 @@
+>-# An interpolation belongs to the line it is written on. Without that bound a `#{` still being
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>-# typed opened a Ruby region that ran to whatever later line held a `}`, colouring everything
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>-# between it and that line.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>%p text #{ name
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^ text.haml
+#        ^^ text.haml meta.embedded.line.ruby.haml punctuation.section.embedded.begin.haml
+#          ^^^^^ text.haml meta.embedded.line.ruby.haml source.ruby
+>%p after inline text
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^^ text.haml
+>:javascript
+#^^^^^^^^^^^ text.haml js.haml
+>  const x = "#{ value
+#^^^^^^^^^^^^^ text.haml js.haml
+#             ^^ text.haml js.haml meta.embedded.line.ruby.haml punctuation.section.embedded.begin.haml
+#               ^^^^^^ text.haml js.haml meta.embedded.line.ruby.haml source.ruby
+>%p after a filter body
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^^^^ text.haml
+>%p text #{ options.fetch(:a, { b:
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^ text.haml
+#        ^^ text.haml meta.embedded.line.ruby.haml punctuation.section.embedded.begin.haml
+#          ^^^^^^^^^^^^^^^^^^^ text.haml meta.embedded.line.ruby.haml source.ruby
+#                             ^ text.haml meta.embedded.line.ruby.haml source.ruby
+#                              ^^^ text.haml meta.embedded.line.ruby.haml source.ruby
+>%p after a nested brace
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^ text.haml
+>-# The injection is excluded from a comment body, so the grammar's own interpolation rules are the
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>-# ones that have to be bounded here.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>-# note
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^ text.haml comment.block.haml
+>  == text #{ open
+#^^^^ text.haml comment.block.haml
+#    ^^^^^^ text.haml comment.block.haml string.quoted.double.ruby
+#          ^^ text.haml comment.block.haml string.quoted.double.ruby source.ruby.embedded.source punctuation.section.embedded.ruby
+#            ^^^^^ text.haml comment.block.haml string.quoted.double.ruby source.ruby.embedded.source
+>  %p still in the comment
+#^^ text.haml comment.block.haml
+#  ^ text.haml comment.block.haml meta.tag.haml punctuation.definition.tag.haml
+#   ^ text.haml comment.block.haml meta.tag.haml entity.name.tag.haml
+#    ^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>%p after a comment
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^ text.haml
+>-# An attribute hash spans lines by design, so this one runs on - but no longer as Ruby.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>%div{ title: "a#{ b
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^^^ text.haml meta.tag.haml entity.name.tag.haml
+#    ^ text.haml meta.section.attributes.haml
+#     ^^^^^^^^^^ text.haml meta.section.attributes.haml
+#               ^^ text.haml meta.section.attributes.haml meta.embedded.line.ruby.haml punctuation.section.embedded.begin.haml
+#                 ^^ text.haml meta.section.attributes.haml meta.embedded.line.ruby.haml source.ruby
+>%p inside the hash still being typed
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.section.attributes.haml
+>-# The cost of ending at the line: an attribute value and a filter body do carry an unfinished
+#^ text.haml meta.section.attributes.haml meta.line.ruby.haml
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.section.attributes.haml meta.line.ruby.haml source.ruby.embedded.haml comment.line.number-sign.ruby
+>-# interpolation onto the next line for Haml, which renders these as title='a3' and `a 3 b`. The
+#^ text.haml meta.section.attributes.haml meta.line.ruby.haml
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.section.attributes.haml meta.line.ruby.haml source.ruby.embedded.haml comment.line.number-sign.ruby
+>-# continuation reads as Haml here.
+#^ text.haml meta.section.attributes.haml meta.line.ruby.haml
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.section.attributes.haml meta.line.ruby.haml source.ruby.embedded.haml comment.line.number-sign.ruby
+>%div{ title: "a#{ 1 +
+#^^^^^^^^^^^^^^^ text.haml meta.section.attributes.haml
+#               ^^ text.haml meta.section.attributes.haml meta.embedded.line.ruby.haml punctuation.section.embedded.begin.haml
+#                 ^^^^ text.haml meta.section.attributes.haml meta.embedded.line.ruby.haml source.ruby
+>  2 }" } t
+#^^^ text.haml meta.section.attributes.haml
+#   ^^ text.haml meta.section.attributes.haml
+#     ^^^^^^ text.haml
+>%p after a spanning attribute
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml
+>:plain
+#^^^^^^ text.haml text.plain.embedded.filter.haml
+>  a #{ 1 +
+#^^^^ text.haml text.plain.embedded.filter.haml
+#    ^^ text.haml text.plain.embedded.filter.haml meta.embedded.line.ruby.haml punctuation.section.embedded.begin.haml
+#      ^^^^ text.haml text.plain.embedded.filter.haml meta.embedded.line.ruby.haml source.ruby
+>  2 } b
+#^^^^^^^^ text.haml text.plain.embedded.filter.haml
+>%p after a spanning filter body
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml
+>-# What the bound cannot reach: an `end` is only tried while its own rule is on top, and Ruby's own
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>-# syntax sits above it - `#{ h["`, `#{ a(1,`, `#{ <<~X`. This still runs to the end of the file, as
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>-# it did before. The stub stands for the construct source.ruby leaves open.
+#^^ text.haml comment.block.haml punctuation.section.comment.haml
+#  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml comment.block.haml
+>%p text #{ LEFT_OPEN_BY_THE_STUB
+#^ text.haml meta.tag.haml punctuation.definition.tag.haml
+# ^ text.haml meta.tag.haml entity.name.tag.haml
+#  ^^^^^^ text.haml
+#        ^^ text.haml meta.embedded.line.ruby.haml punctuation.section.embedded.begin.haml
+#          ^ text.haml meta.embedded.line.ruby.haml source.ruby
+#           ^^^^^^^^^^^^^^^^^^^^^ text.haml meta.embedded.line.ruby.haml source.ruby meta.left-open.stub
+>%p after an open Ruby literal
+#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.haml meta.embedded.line.ruby.haml source.ruby meta.left-open.stub
+>%footer done
+#^^^^^^^^^^^^^ text.haml meta.embedded.line.ruby.haml source.ruby meta.left-open.stub
+>

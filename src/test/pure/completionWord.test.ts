@@ -159,6 +159,19 @@ suite('pure/completionWord Test Suite', () => {
       assert.strictEqual(applied('link', OUTPUT_BODY), OUTPUT_BODY);
     });
 
+    // `~` is a marker - partial navigation needs it seen - but no body is written with it, and
+    // putting a body's `= ` in its place would silently stop the line preserving whitespace.
+    test('should see the whitespace-preserving marker and offer no body that would replace it', () => {
+      assert.strictEqual(accepted('~ link').marker, '~ ');
+      assert.strictEqual(accepted('~ link').markerAtLineStart, true);
+      assert.strictEqual(accepted('%pre~ link').markerAtLineStart, false);
+      assert.strictEqual(applied('~ link', OUTPUT_BODY), null);
+      assert.strictEqual(applied('~ cache', SILENT_BODY), null);
+      assert.strictEqual(applied('%pre~ link', OUTPUT_BODY), null);
+      assert.strictEqual(applied('~ image_al', BARE_BODY), `~ ${BARE_BODY}`);
+      assert.strictEqual(word('%p ~ link'), null);
+    });
+
     // Haml tag names match [-:\w]+, so `%p- cache` silently becomes a tag called `p-` rather than
     // failing to compile.
     test('should not offer a silent script body after a tag', () => {

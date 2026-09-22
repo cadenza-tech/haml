@@ -80,18 +80,40 @@ export interface ProcessRunnerDeps {
 }
 
 /**
- * Kills a child and, on Windows, its whole tree.
+ * Signals a child and everything it started, off Windows.
  *
- * `child.kill` reaches only the direct child. On the cmd.exe wrapper path that is cmd itself: the
- * ruby grandchild survives, keeps the inherited stdio pipes open - so 'close' waits on it - and
- * burns CPU on the very document that just timed out. taskkill /T is the platform's tree kill; it
- * is addressed absolutely because resolving commands to absolute paths is invariant here, and the
- * current directory must never be searched for it.
+ * `child.kill` reaches only the direct child, and an executablePath wrapper that does not `exec` - a
+ * docker `bin/haml-lint` - leaves the real work in a grandchild that survives it, keeps the inherited
+ * stdio pipes open so 'close' waits on it, and holds the run's concurrency slot until it is done. Every
+ * child is spawned as the leader of its own process group for this, and a negative pid addresses the
+ * group. A group id stays taken for as long as any member lives, so this cannot hit a stranger while
+ * the group is what holds the pipes. What it cannot reach is a descendant that left the group and
+ * kept them: the group is then empty, ESRCH says so, and the run ends when that process does.
+ */
+function signalGroup(child: ChildProcess, signal: NodeJS.Signals): void {
+  if (child.pid === undefined) {
+    // No pid means the spawn already failed; there is nothing alive to address by id.
+    child.kill(signal);
+    return;
+  }
+  try {
+    process.kill(-child.pid, signal);
+  } catch {
+    child.kill(signal);
+  }
+}
+
+/**
+ * Kills a child and its whole tree.
+ *
+ * On the cmd.exe wrapper path the direct child is cmd itself: the ruby grandchild survives, keeps the
+ * inherited stdio pipes open - so 'close' waits on it - and burns CPU on the very document that just
+ * timed out. taskkill /T is the platform's tree kill; it is addressed absolutely because resolving
+ * commands to absolute paths is invariant here, and the current directory must never be searched for it.
  */
 function killTree(child: ChildProcess, platform: NodeJS.Platform): void {
   if (platform !== 'win32' || child.pid === undefined) {
-    // No pid means the spawn already failed; there is nothing alive to address by id.
-    child.kill('SIGKILL');
+    signalGroup(child, 'SIGKILL');
     return;
   }
   const taskkill = path.win32.join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'taskkill.exe');
@@ -148,6 +170,10 @@ export function createProcessRunner(deps: ProcessRunnerDeps): DisposableProcessR
           cwd: request.cwd,
           env: request.env,
           shell: false,
+          // Its own process group off Windows, which is what lets signalGroup reach a grandchild. The
+          // other side of it: a signal sent to the extension host's group no longer reaches the child,
+          // which is what dispose() is for.
+          detached: platform !== 'win32',
           windowsHide: true,
           windowsVerbatimArguments: request.windowsVerbatimArguments === true
         });
@@ -185,8 +211,8 @@ export function createProcessRunner(deps: ProcessRunnerDeps): DisposableProcessR
           killTree(child, platform);
           return;
         }
-        child.kill('SIGTERM');
-        killTimer = setTimeout(() => child.kill('SIGKILL'), killGraceMs);
+        signalGroup(child, 'SIGTERM');
+        killTimer = setTimeout(() => signalGroup(child, 'SIGKILL'), killGraceMs);
       };
 
       // stdout drives the document, so exceeding the budget has to fail the run: a truncated
@@ -258,12 +284,23 @@ export function createProcessRunner(deps: ProcessRunnerDeps): DisposableProcessR
         finish({ ok: true, code, stdout: decode(stdoutChunks), stderr: decode(stderrChunks), durationMs: Date.now() - startedAt });
       });
 
+      // Whichever comes first names the outcome, and is the only one to terminate. A cancelled child
+      // can take its whole grace period to die, and a timeout coming due in the meantime would
+      // otherwise be what 'close' reports - which records a back-off against a document whose run was
+      // merely superseded. A second terminate() would also arm a second kill timer over the first,
+      // leaving the first to fire after cleanup() at a group id that by then may be somebody else's.
       timeoutTimer = setTimeout(() => {
+        if (cancelled) {
+          return;
+        }
         timedOut = true;
         terminate();
       }, request.timeoutMs);
 
       subscription = token?.onCancellationRequested(() => {
+        if (timedOut || cancelled) {
+          return;
+        }
         cancelled = true;
         terminate();
       });

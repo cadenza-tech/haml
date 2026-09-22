@@ -20,11 +20,11 @@
 
 - Syntax highlighting for `.haml`, including the `:ruby`, `:javascript`, `:css`, `:sass`, `:scss`, `:coffee`, `:markdown`, `:plain`, `:escaped`, `:preserve`, `:cdata` and `:erb` filters
 - Multi-line Ruby, continued either with a trailing comma or with the explicit `|` marker
-- `#{...}` interpolation highlighted as Ruby wherever it appears, including inside filters
+- `#{...}` interpolation highlighted as Ruby wherever it appears, including inside filters, on the line it is written on
 - Diagnostics from [haml-lint](https://github.com/sds/haml-lint), with each linter name linking to its documentation
 - Format on save through haml-lint's auto-correct, enabled out of the box and a complete no-op when haml-lint is not available
 - Quick Fixes to disable a linter for a block, and a file-level "Fix all auto-correctable Haml offenses" source action
-- Go to Definition and completion for the partial a `render` call names, resolved the way Rails resolves it
+- Go to Definition and completion for the partial a `render` call names
 - Selection refactorings: wrap in a conditional or a Ruby block, and extract to a new partial
 - Completion for the `data-*` attributes Turbo, Stimulus and Rails UJS define, in all three Haml notations
 - Snippets for Haml control flow, filters, doctypes and comments
@@ -91,7 +91,7 @@ These are contributed defaults, so your own settings always win. To turn formatt
 "haml.formatter": "none"
 ```
 
-If you prefer the code-actions-on-save style instead, note that it runs the same auto-correct — there is no reason to enable both:
+If you prefer the code-actions-on-save style instead, note that it runs the same auto-correct — there is no reason to enable both. With both on, every save waits for two haml-lint runs instead of one and ends up with the same text:
 
 ```jsonc
 // VS Code 1.85 and newer
@@ -127,14 +127,25 @@ filesystem — a virtual workspace such as GitHub Repositories, a diff from the 
 untitled buffer. It is also off for a file opened on its own without a workspace folder, since there
 is then no directory to search upwards from. Set `"on"` in those cases.
 
-Two behaviours differ from the built-in Haml snippets, because a contributed snippet file cannot be
-switched off by a setting and these are therefore supplied by a completion provider instead:
+Two behaviours differ from the other built-in Haml snippets, because a contributed snippet file
+cannot be switched off by a setting and these are therefore supplied by a completion provider
+instead:
 
 - they do not appear in the **Insert Snippet** command
 - they do not expand with `editor.tabCompletion`
 
 They are suggested as you type like any other snippet, and honour
 `editor.snippetSuggestions: "none"`.
+
+The Haml control-flow snippets (`if`, `ifelse`, `unless`, `each`, `case`, `yield`, ...) come from the
+same provider and share those two differences, for a different reason: a contributed snippet replaces
+only the word you typed, so after a marker it would leave `- - if condition` behind. Supplied this way
+they work whether you type `if` or `- if`, whatever `haml.snippets.rails` says, and stay out of filter
+bodies and `-#` comments, where `if` is JavaScript or prose.
+
+They are matched by the start of the word, so that they never stand in the way of the word-based
+suggestions for what you are typing: start `content_for` with `c`, not with `cf`. For the same reason
+triggering suggestions on an empty line lists none of them — type the first letter.
 
 ## Partials
 
@@ -143,8 +154,7 @@ They are suggested as you type like any other snippet, and honour
 nothing to configure and no Ruby process is involved — only file names are read, so both work in an
 untrusted workspace too.
 
-The name resolves the way Rails resolves it, against the `app/views` directory that contains the
-current file:
+The name is resolved against the `app/views` directory that contains the current file:
 
 | Written | Opens |
 | - | - |
@@ -153,6 +163,10 @@ current file:
 | `= render partial: 'shared/foo'` | the same as the first form |
 | `= render layout: 'shared/foo' do` | the same as the first form |
 
+A name without a slash is a best guess. Rails looks it up under the prefixes of whichever controller
+renders the view, which a file on its own does not say; beside the current file is where that is for a
+view in its controller's own directory, so it is tried first.
+
 `.haml` is preferred over `.erb`, and the current file's own format over `html`: from
 `index.turbo_stream.haml`, `= render 'shared/foo'` opens `_foo.turbo_stream.haml` when it exists and
 falls back to `_foo.html.haml` when it does not.
@@ -160,8 +174,11 @@ falls back to `_foo.html.haml` when it does not.
 `= render template: 'posts/index'` is deliberately not followed. A template resolves without the
 leading underscore, so treating it as a partial would point at a file that is not there.
 
-Completion offers a partial that sits beside the current file under its bare name, and everything else
-under its `app/views`-relative name, which is what Rails needs in each case. Turn it off with:
+Completion always inserts the `app/views`-relative name, also for a partial beside the current file:
+`render 'sidebar'` only resolves from a view in the rendering controller's own directory - from
+`shared/` or a layout it is a missing partial - while `render 'posts/sidebar'` resolves from anywhere.
+Typing just `side` still finds it, and until something is typed the partials beside the current file
+are listed first. Turn it off with:
 
 ```jsonc
 "haml.completions.partials": false
@@ -212,7 +229,7 @@ Rails snippets never spawn anything either, but `auto` does read `Gemfile.lock` 
 | - | - | - |
 | `haml.lint.run` | `onSave` | When to run diagnostics: `onSave` (also on open), `onType`, or `off`. |
 | `haml.lint.debounceMs` | `500` | Debounce in milliseconds while typing. Only used when `haml.lint.run` is `onType`. |
-| `haml.lint.exclude` | `[]` | Glob patterns of files to skip. See [Known Limitations](#known-limitations). |
+| `haml.lint.exclude` | `[]` | Glob patterns of files to skip, relative to the workspace folder. See [Known Limitations](#known-limitations). |
 | `haml.formatter` | `auto` | Auto-correct mode: `auto`, `safe` (`haml-lint -a`), `all` (`haml-lint -A`), or `none`. |
 | `haml.hamlLint.executablePath` | `null` | Absolute path to the haml-lint executable, or a bare command name resolved on `PATH`; relative paths are refused. Skips bundler detection when set. |
 | `haml.hamlLint.useBundler` | `auto` | Whether to run through `bundle exec`: `auto`, `always`, or `never`. |
@@ -250,8 +267,9 @@ Linting a Haml file runs Ruby code from your workspace: `bundle exec` evaluates 
 - **This extension never writes to your configuration files.**
 - **Only `.haml-lint.yml`, `.haml-lint_todo.yml` and `.rubocop.yml` are watched.** Changing any of them re-lints the Haml files you have open. `.haml-lint_todo.yml` is watched because `haml-lint --auto-gen-config` always writes that name, but haml-lint reads it only when your `.haml-lint.yml` names it in `inherits_from` — without that line it is watched and still inert, exactly as it is on the command line. A configuration reached some other way — a file named by `haml.hamlLint.configPath`, or any other file pulled in by `inherits_from` — is still read on every run, but changing it does not refresh anything on its own until you edit a `.haml` file or run `Haml: Lint File`.
 - **`Haml: Split to Partial` adds no `locals:`.** Instance variables carry over on their own, but a selection using a block variable needs the argument adding by hand — deriving them means parsing the Ruby in the selection, and getting that wrong would silently change what the view renders. It also never overwrites: if a partial of that name already exists the command stops, and it needs a file saved on disk, unlike the two wrap commands which work in an untitled buffer too.
-- **A selection is interpreted by indentation alone.** With no selection the block under the cursor is used, and a selection whose last line still has children is extended to include them — otherwise raising it one level would detach them. Nothing understands filters, so wrapping the body of a `:ruby` or `:javascript` filter produces broken Ruby or JavaScript, and neither does anything understand multi-line Ruby, so a selection starting midway through a `|`-continued or comma-continued expression is not valid either.
+- **A selection is interpreted by indentation alone.** With no selection the block under the cursor is used, and a selection whose last line still has children is extended to include them — otherwise raising it one level would detach them. The one thing read beyond indentation is a mid-block keyword: an `- else`, `- elsif`, `- when`, `- rescue` or `- ensure` stays with the `- if`, `- case` or `- begin` it belongs to, so a selection that covers only part of such a construct grows to all of it. Nothing understands filters, so wrapping the body of a `:ruby` or `:javascript` filter produces broken Ruby or JavaScript, and neither does anything understand multi-line Ruby, so a selection starting midway through a `|`-continued or comma-continued expression is not valid either.
 - **Partials are resolved against one `app/views`.** The one containing the current file, which means an engine's or a dummy app's is used when the file lives there. `prepend_view_path` and an engine's view path chain would need the application to be booted, so they are not followed.
+- **An interpolation is highlighted on its own line.** Haml carries an unfinished `#{` onto the next line in an attribute value and in a filter body, and there the continuation is highlighted as Haml rather than as Ruby. The alternative is worse: reading on until a `}` turns up meant that every `#{` you had not finished typing coloured the rest of the file as Ruby. One shape still does: an interpolation whose Ruby is itself unfinished — `#{ h["`, `#{ a(1,`, `#{ <<~X` — keeps the Ruby grammar's own region open, and nothing outside it can close that.
 - **Attribute completion reads one line.** An attribute hash spread over several lines cannot be judged from the line being typed, so nothing is offered there.
 - **Partial completion needs a workspace folder.** File search always comes back empty without one, so a `.haml` file opened on its own gets Go to Definition but no completion. Multi-line `render partial:` calls are not covered either, since the name has to be on the line being typed.
 - **`haml` language id conflicts.** Several extensions contribute the `haml` language and the `text.haml` grammar. If more than one is installed the result is whichever loads last, so installing only one is recommended.

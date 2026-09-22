@@ -47,13 +47,14 @@ export class DataAttributeCompletionProvider implements vscode.CompletionItemPro
   provideCompletionItems(document: vscode.TextDocument, position: vscode.Position): vscode.CompletionItem[] | undefined {
     // The cheap string test first: most positions in a Haml file are not inside an attribute list, and
     // none of those read the configuration.
-    const attribute = classifyAttributePosition(document.lineAt(position.line).text.slice(0, position.character));
+    const line = document.lineAt(position.line).text;
+    const attribute = classifyAttributePosition(line.slice(0, position.character), line.slice(position.character));
     if (attribute === null || !this.getConfig(document.uri).completionsDataAttributes) {
       return undefined;
     }
 
     const replaced = attribute.identifierLength + attribute.markerLength;
-    const range = new vscode.Range(position.translate(0, -replaced), position);
+    const range = new vscode.Range(position.translate(0, -replaced), position.translate(0, attribute.trailingLength));
     const items: DataAttributeItem[] = [];
     for (const { completion, insertText } of PREPARED[attribute.syntax]) {
       const item = new DataAttributeItem(completion, insertText);

@@ -134,6 +134,35 @@ suite('hamlLint/outcome Test Suite', () => {
       assert.strictEqual(result.reason, 'unparseable-report');
     });
 
+    // In this mode the report shares stderr with every warning Ruby, Bundler or a gem prints. One
+    // `warning:` line must not cost the user the format they asked for.
+    test('should find the report among the warnings a format run shares stderr with', () => {
+      const noisy = `warning: base64 was loaded from the standard library\n${REPORT}\nwarning: at exit\n`;
+      const result = interpretResult(finished({ code: 65, stdout: '%p fixed\n', stderr: noisy }), 'format-and-lint');
+      assert.ok(result.ok);
+      assert.strictEqual(result.outcome.report?.offenses.length, 1);
+      assert.strictEqual(result.outcome.correctedSource, '%p fixed\n');
+    });
+
+    // The report on stderr is the proof that stdout holds the corrected source and nothing else. A
+    // wrapper that merges the streams (`2>&1`, a docker exec with a TTY) puts the report into stdout
+    // instead, and writing that back would put JSON into the user's file - so without a report on
+    // stderr nothing is applied, whatever else stderr says.
+    test('should apply nothing when stderr carries no report', () => {
+      for (const stderr of ['', 'WARN[0000] the attribute `version` is obsolete\n']) {
+        const result = interpretResult(finished({ code: 65, stdout: `%p fixed\n${REPORT}\n`, stderr }), 'format-and-lint');
+        assert.ok(!result.ok, JSON.stringify(stderr));
+        assert.strictEqual(result.reason, 'unparseable-report');
+      }
+    });
+
+    test('should apply nothing when stdout carries a report as well', () => {
+      const both = `%p fixed\n${REPORT}\n`;
+      const result = interpretResult(finished({ code: 65, stdout: both, stderr: both }), 'format-and-lint');
+      assert.ok(!result.ok);
+      assert.strictEqual(result.reason, 'unparseable-report');
+    });
+
     test('should pass a spawn failure through with its own reason', () => {
       const result = interpretResult({ ok: false, reason: 'enoent', stderr: '', message: 'not found' }, 'lint');
       assert.ok(!result.ok);

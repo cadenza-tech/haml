@@ -14,7 +14,7 @@ export interface Position {
 
 export interface LineSnapshot {
   readonly text: string;
-  /** Space and tab only, as VS Code's own firstNonWhitespaceCharacterIndex counts it. */
+  /** Space and tab only, as Haml indents. vscode.TextLine's field of the same name is `\s`-based. */
   readonly firstNonWhitespaceCharacterIndex: number;
 }
 

@@ -208,11 +208,12 @@
 >        # Heading
 #^^^^^^^^^^^^^^^^^^ text.haml meta.embedded.markdown
 >      :sass
-#^^^^^^^^^^^ text.haml source.sass.embedded.filter.haml
+#^^^^^^ text.haml source.embedded.filter.sass
+#      ^^^^^ text.haml source.embedded.filter.sass keyword.control.filter.haml
 >        .a
-#^^^^^^^^^^^ text.haml source.sass.embedded.filter.haml
+#^^^^^^^^^^^ text.haml source.embedded.filter.sass
 >          color: red
-#^^^^^^^^^^^^^^^^^^^^^ text.haml source.sass.embedded.filter.haml
+#^^^^^^^^^^^^^^^^^^^^^ text.haml source.embedded.filter.sass
 >      :scss
 #^^^^^^ text.haml meta.embedded.scss
 #      ^^^^^ text.haml meta.embedded.scss entity.name.tag.haml
@@ -226,5 +227,55 @@
 #^^^^^^ text.haml meta.filter.erb.haml
 #      ^^^^ text.haml meta.filter.erb.haml keyword.control.filter.haml
 >        <%= foo %>
-#^^^^^^^^^^^^^^^^^^^ text.haml meta.filter.erb.haml
+#^^^^^^^^ text.haml meta.filter.erb.haml
+#        ^^^ text.haml meta.filter.erb.haml punctuation.section.embedded.begin.erb.haml
+#           ^^^^^ text.haml meta.filter.erb.haml source.ruby.embedded.erb.haml
+#                ^^ text.haml meta.filter.erb.haml punctuation.section.embedded.end.erb.haml
+>        <p>Don't</p>
+#^^^^^^^^^^^^^^^^^^^^^ text.haml meta.filter.erb.haml
+>        <%# note %>
+#^^^^^^^^ text.haml meta.filter.erb.haml
+#        ^^^ text.haml meta.filter.erb.haml comment.block.erb.haml
+#           ^^^^^^ text.haml meta.filter.erb.haml comment.block.erb.haml
+#                 ^^ text.haml meta.filter.erb.haml comment.block.erb.haml
+>        <%- bar -%>
+#^^^^^^^^ text.haml meta.filter.erb.haml
+#        ^^^ text.haml meta.filter.erb.haml punctuation.section.embedded.begin.erb.haml
+#           ^^^^^ text.haml meta.filter.erb.haml source.ruby.embedded.erb.haml
+#                ^^^ text.haml meta.filter.erb.haml punctuation.section.embedded.end.erb.haml
+>        <% baz # note %>
+#^^^^^^^^ text.haml meta.filter.erb.haml
+#        ^^ text.haml meta.filter.erb.haml punctuation.section.embedded.begin.erb.haml
+#          ^^^^^ text.haml meta.filter.erb.haml source.ruby.embedded.erb.haml
+#               ^^^^^^^ text.haml meta.filter.erb.haml source.ruby.embedded.erb.haml comment.line.number-sign.ruby
+#                      ^^ text.haml meta.filter.erb.haml punctuation.section.embedded.end.erb.haml
+>      %p after-erb
+#^^^^^^ text.haml
+#      ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#       ^ text.haml meta.tag.haml entity.name.tag.haml
+#        ^^^^^^^^^^^ text.haml
+>      :erb
+#^^^^^^ text.haml meta.filter.erb.haml
+#      ^^^^ text.haml meta.filter.erb.haml keyword.control.filter.haml
+>        <%= open
+#^^^^^^^^ text.haml meta.filter.erb.haml
+#        ^^^ text.haml meta.filter.erb.haml punctuation.section.embedded.begin.erb.haml
+#           ^^^^^^ text.haml meta.filter.erb.haml source.ruby.embedded.erb.haml
+>      %p after-open-tag
+#^^^^^^ text.haml
+#      ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#       ^ text.haml meta.tag.haml entity.name.tag.haml
+#        ^^^^^^^^^^^^^^^^ text.haml
+>      :erb
+#^^^^^^ text.haml meta.filter.erb.haml
+#      ^^^^ text.haml meta.filter.erb.haml keyword.control.filter.haml
+>        <%# open
+#^^^^^^^^ text.haml meta.filter.erb.haml
+#        ^^^ text.haml meta.filter.erb.haml comment.block.erb.haml
+#           ^^^^^^ text.haml meta.filter.erb.haml comment.block.erb.haml
+>      %p after-open-comment
+#^^^^^^ text.haml
+#      ^ text.haml meta.tag.haml punctuation.definition.tag.haml
+#       ^ text.haml meta.tag.haml entity.name.tag.haml
+#        ^^^^^^^^^^^^^^^^^^^^ text.haml
 >

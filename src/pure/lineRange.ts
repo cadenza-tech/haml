@@ -1,8 +1,9 @@
 // Selection normalization and indentation arithmetic, shared by the selection refactorings.
 //
-// The block rule mirrors disableComment's findBlockEnd - a Haml block is its own line plus every
-// line indented deeper - but anchored to the selection's shallowest indent rather than to one line.
+// The block rule is the one the disable quick fix uses, from src/pure/blockStructure.ts, but
+// anchored to the selection's shallowest indent rather than to one line.
 
+import { extendBlock, findBlockStart } from './blockStructure';
 import { isBlankText, skipSpaces } from './characters';
 import type { DocumentSnapshot } from './textModel';
 
@@ -42,7 +43,7 @@ function sharedPrefix(left: string, right: string): string {
  *
  * It extends past the end while lines are deeper than the selection's *shallowest* indent, not just
  * past the last selected line's own block. A selection covering two same-depth siblings can end in
- * the middle of the second one, and asking findBlockEnd about any single line would leave that
+ * the middle of the second one, and asking for the block of any single line would leave that
  * sibling's remaining children behind. Everything up to the next line at or above the shallowest
  * indent belongs to something selected.
  */
@@ -62,6 +63,7 @@ export function normalizeSelection(selection: SelectionInput, document: Document
   }
 
   let shallowestIndent = Number.POSITIVE_INFINITY;
+  let shallowestLine = startLine;
   for (let index = startLine; index <= endLine; index++) {
     const line = document.lineAt(index);
     if (isBlankText(line.text)) {
@@ -69,22 +71,20 @@ export function normalizeSelection(selection: SelectionInput, document: Document
     }
     if (line.firstNonWhitespaceCharacterIndex < shallowestIndent) {
       shallowestIndent = line.firstNonWhitespaceCharacterIndex;
+      shallowestLine = index;
     }
   }
-  // Blank lines defer to what follows them, the way findBlockEnd reads a block: a stanza split by
+  // A selection whose shallowest line is an `- else` has left the `- if` it answers to outside, and
+  // neither half survives being raised or extracted alone. For a `- when` nested under its `- case`
+  // the opener is shallower still, which moves the indent everything below is measured against.
+  const opener = findBlockStart(shallowestLine, document);
+  if (opener < startLine) {
+    startLine = opener;
+    shallowestIndent = Math.min(shallowestIndent, document.lineAt(opener).firstNonWhitespaceCharacterIndex);
+  }
+  // Blank lines defer to what follows them, the way extendBlock reads a block: a stanza split by
   // an empty line stays intact, and trailing blanks are not dragged in.
-  let blockEnd = endLine;
-  for (let index = endLine + 1; index < document.lineCount; index++) {
-    const line = document.lineAt(index);
-    if (isBlankText(line.text)) {
-      continue;
-    }
-    if (line.firstNonWhitespaceCharacterIndex <= shallowestIndent) {
-      break;
-    }
-    blockEnd = index;
-  }
-  return { startLine, endLine: blockEnd };
+  return { startLine, endLine: extendBlock(endLine, shallowestIndent, document) };
 }
 
 export function linesOf(range: LineRange, document: DocumentSnapshot): string[] {

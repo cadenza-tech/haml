@@ -5,9 +5,11 @@ import { snapshotOfLines } from '../support/snapshot';
 
 /**
  * The lines src/test/support/snapshot models, chosen for the cases where a fake could drift:
- * tab indentation, a whitespace-only line, an empty line, and a normal indented line.
+ * tab indentation, a whitespace-only line, an empty line, a normal indented line, and two lines led
+ * by whitespace that is not indentation. vscode.TextLine measures with `\s`, which takes U+3000 and
+ * NBSP for indentation; Haml indents with space and tab only and renders those two as content.
  */
-const LINES = ['%h1 Posts', '\t\t%p tabbed', '   ', '', '  .card', ''];
+const LINES = ['%h1 Posts', '\t\t%p tabbed', '   ', '', '  .card', '  　全角スペースで始まる本文', ' nbsp', ''];
 
 // Sixteen pure tests build a DocumentSnapshot by hand rather than through this adapter, because
 // using the real one would drag vscode into the plain-Node suite - which is the whole reason

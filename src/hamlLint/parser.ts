@@ -88,3 +88,26 @@ export function parseReport(text: unknown): ParseResult {
   const report: HamlLintReport = { offenses };
   return { ok: true, report };
 }
+
+/**
+ * Parses a report out of a stream it shares with other writers.
+ *
+ * That is stderr in a format run: the corrected source has stdout to itself, so the report sits
+ * beside whatever Ruby, Bundler or a gem chose to warn about. The JSON reporter writes the report as
+ * one line, so a whole line that parses as a report is the report - this still never salvages a
+ * substring. The last such line wins, because warnings printed while loading come first.
+ */
+export function parseReportLine(text: unknown): ParseResult {
+  const whole = parseReport(text);
+  if (whole.ok) {
+    return whole;
+  }
+  const lines = whole.raw.split(/\r?\n/);
+  for (let index = lines.length - 1; index >= 0; index--) {
+    const parsed = parseReport(lines[index]);
+    if (parsed.ok) {
+      return parsed;
+    }
+  }
+  return whole;
+}

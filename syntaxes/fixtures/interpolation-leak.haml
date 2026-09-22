@@ -1,0 +1,35 @@
+-# An interpolation belongs to the line it is written on. Without that bound a `#{` still being
+-# typed opened a Ruby region that ran to whatever later line held a `}`, colouring everything
+-# between it and that line.
+%p text #{ name
+%p after inline text
+:javascript
+  const x = "#{ value
+%p after a filter body
+%p text #{ options.fetch(:a, { b:
+%p after a nested brace
+-# The injection is excluded from a comment body, so the grammar's own interpolation rules are the
+-# ones that have to be bounded here.
+-# note
+  == text #{ open
+  %p still in the comment
+%p after a comment
+-# An attribute hash spans lines by design, so this one runs on - but no longer as Ruby.
+%div{ title: "a#{ b
+%p inside the hash still being typed
+-# The cost of ending at the line: an attribute value and a filter body do carry an unfinished
+-# interpolation onto the next line for Haml, which renders these as title='a3' and `a 3 b`. The
+-# continuation reads as Haml here.
+%div{ title: "a#{ 1 +
+  2 }" } t
+%p after a spanning attribute
+:plain
+  a #{ 1 +
+  2 } b
+%p after a spanning filter body
+-# What the bound cannot reach: an `end` is only tried while its own rule is on top, and Ruby's own
+-# syntax sits above it - `#{ h["`, `#{ a(1,`, `#{ <<~X`. This still runs to the end of the file, as
+-# it did before. The stub stands for the construct source.ruby leaves open.
+%p text #{ LEFT_OPEN_BY_THE_STUB
+%p after an open Ruby literal
+%footer done

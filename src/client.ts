@@ -218,7 +218,7 @@ export class HamlLintClient {
     // 127 has to be reported against.
     const interpreted = interpretResult(result, request.mode, invocation.command);
     if (!interpreted.ok) {
-      this.logFailure(interpreted.reason, interpreted.detail, result);
+      this.logFailure(interpreted.reason, interpreted.detail, result, request.mode);
     }
     return interpreted;
   }
@@ -247,13 +247,15 @@ export class HamlLintClient {
    * least one line: for spawn-error and overflow the detail is the only evidence there is, and
    * stderr is usually empty, so a run that produced no diagnostics stayed wholly unexplained.
    */
-  private logFailure(reason: RunFailureReason, detail: string | undefined, result: SpawnResult): void {
+  private logFailure(reason: RunFailureReason, detail: string | undefined, result: SpawnResult, mode: RunRequest['mode']): void {
     if (isSkip(reason)) {
       return;
     }
     if (reason === 'unparseable-report') {
       this.logger.warn(detail ?? 'could not parse the haml-lint report; keeping the previous diagnostics');
-      this.logger.detail('raw output', result.ok ? result.stdout || result.stderr : result.stderr);
+      // The stream the report was expected on. In a format run that is stderr, and stdout is the
+      // user's own document - which explains nothing and does not belong in a log.
+      this.logger.detail('raw output', result.ok && mode === 'lint' ? result.stdout || result.stderr : result.stderr);
       return;
     }
     // A timeout's line is the back-off warning applyBackOff just wrote, with the size and the
@@ -263,6 +265,13 @@ export class HamlLintClient {
     }
     if (result.stderr.trim() !== '') {
       this.logger.detail('stderr', result.stderr);
+    }
+    // haml-lint builds its logger from `options[:stderr] ? $stderr : $stdout` (cli.rb), so a lint
+    // run - started without --stderr - explains an error exit on stdout and leaves stderr empty: a
+    // broken .haml-lint.yml is exit 78 with the YAML error there. Only in lint mode, though. A format
+    // run does pass --stderr, and its stdout is the user's document, which has no place in a log.
+    if (reason === 'exit' && mode === 'lint' && result.ok) {
+      this.logger.detail('stdout', result.stdout);
     }
   }
 

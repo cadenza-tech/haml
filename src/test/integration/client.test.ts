@@ -335,6 +335,7 @@ suite('client untitled document Test Suite', () => {
 class RecordingLogger extends Logger {
   readonly errors: string[] = [];
   readonly warnings: string[] = [];
+  readonly details: string[] = [];
 
   override error(message: string, error?: unknown): void {
     this.errors.push(message);
@@ -344,6 +345,11 @@ class RecordingLogger extends Logger {
   override warn(message: string): void {
     this.warnings.push(message);
     super.warn(message);
+  }
+
+  override detail(label: string, text: string, limit?: number): void {
+    this.details.push(text);
+    super.detail(label, text, limit);
   }
 }
 
@@ -404,6 +410,59 @@ suite('client failure logging Test Suite', () => {
       `the back-off warning must explain the timeout, got ${JSON.stringify(recording.warnings)}`
     );
     assert.strictEqual(recording.errors.length, 0, 'a timeout must not add a second, generic line');
+  });
+
+  // In a format run the report is expected on stderr, and stdout is the user's corrected document:
+  // logging that as the "raw output" explained nothing and copied their file into the channel.
+  test('should log the stream a format run expected its report on', async () => {
+    const runner = recordingRunner([
+      { ok: true, code: 65, stdout: '%p the users own text\n', stderr: 'WARN[0000] no report here\n', durationMs: 10 }
+    ]);
+    const client = new HamlLintClient(runner, recording, RESOLVING_DEPS);
+    const document = await openView('offenses.haml');
+
+    const result = await client.run(document, config(), { mode: 'format-and-lint', formatter: 'safe' });
+
+    assert.strictEqual(result.ok, false);
+    assert.ok(
+      recording.details.some((text) => text.includes('no report here')),
+      `stderr must be what gets logged, got ${JSON.stringify(recording.details)}`
+    );
+    assert.ok(!recording.details.some((text) => text.includes('the users own text')), 'the document must stay out of the log');
+  });
+
+  // haml-lint builds its logger from `options[:stderr] ? $stderr : $stdout` (cli.rb), so a lint run -
+  // which passes no --stderr - explains an error exit on stdout and leaves stderr empty. A broken
+  // .haml-lint.yml is exit 78 with the YAML error there, and logging stderr alone said nothing.
+  test('should log what haml-lint wrote to stdout when a lint run exits with an error', async () => {
+    const explanation = "Unable to load configuration from '.haml-lint.yml': did not find expected ','";
+    const runner = recordingRunner([{ ok: true, code: 78, stdout: `${explanation}\n`, stderr: '', durationMs: 10 }]);
+    const client = new HamlLintClient(runner, recording, RESOLVING_DEPS);
+    const document = await openView('offenses.haml');
+
+    const result = await client.run(document, config(), { mode: 'lint' });
+
+    assert.ok(!result.ok && result.reason === 'exit');
+    assert.ok(
+      recording.details.some((text) => text.includes(explanation)),
+      `the explanation must reach the channel, got ${JSON.stringify(recording.details)}`
+    );
+  });
+
+  // A format run is started with --stderr, so the explanation is on stderr there - and stdout is the
+  // corrected document, or the start of one, which has no place in a log.
+  test('should keep stdout out of the log when a format run exits with an error', async () => {
+    const runner = recordingRunner([
+      { ok: true, code: 78, stdout: '%p the users own text\n', stderr: 'Unable to load configuration\n', durationMs: 10 }
+    ]);
+    const client = new HamlLintClient(runner, recording, RESOLVING_DEPS);
+    const document = await openView('offenses.haml');
+
+    const result = await client.run(document, config(), { mode: 'format-and-lint', formatter: 'safe' });
+
+    assert.ok(!result.ok && result.reason === 'exit');
+    assert.ok(recording.details.some((text) => text.includes('Unable to load configuration')));
+    assert.ok(!recording.details.some((text) => text.includes('the users own text')), 'the document must stay out of the log');
   });
 });
 

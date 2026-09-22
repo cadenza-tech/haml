@@ -66,7 +66,7 @@ export class PartialCompletionProvider implements vscode.CompletionItemProvider 
     if (!hasLocalPath(document.uri)) {
       return undefined;
     }
-    // The cheap string test comes first, as in RailsSnippetCompletionProvider: only a cursor actually
+    // The cheap string test comes first, as in SnippetCompletionProvider: only a cursor actually
     // inside a render call's name literal is allowed to reach the filesystem.
     const reference = partialReferenceAt(document.lineAt(position.line).text, position.character);
     if (reference === null || !this.getConfig(document.uri).completionsPartials) {

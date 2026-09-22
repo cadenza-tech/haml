@@ -9,7 +9,7 @@ import { commonIndent, indentLines, type LineRange, linesOf } from './lineRange'
 import type { DocumentSnapshot, Eol, Position } from './textModel';
 
 /**
- * The first line of the matching entry in snippets/haml.code-snippets, so the extension offers one
+ * The first line of the matching entry in src/pure/controlSnippets.ts, so the extension offers one
  * dialect rather than two. The defaults matter: Esc leaves them in place, and `- if condition` is
  * still valid Haml where a bare `- if ` would be a Ruby syntax error. They are deliberately not
  * guesses about the user's data either - `@items` left behind by Esc would read as real code.

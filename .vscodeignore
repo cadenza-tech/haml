@@ -7,6 +7,10 @@ src/**
 coverage/**
 tmp/**
 .github/**
+.claude/**
+.ruby-lsp/**
+CLAUDE.md
+images/icon.svg
 .yarn/**
 .yarnrc.yml
 yarn.lock

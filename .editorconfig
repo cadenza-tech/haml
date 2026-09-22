@@ -11,3 +11,9 @@ trim_trailing_whitespace = true
 
 [*.md]
 trim_trailing_whitespace = false
+
+# Grammar fixtures are input, not source: `multiline-ruby.haml` holds lines whose trailing space is
+# the whole point of the case, and a `.snap` quotes its fixture line for line. Trimming either turns
+# the test green without testing anything, which `manifest.test.ts` also guards against.
+[syntaxes/fixtures/*.{haml,snap}]
+trim_trailing_whitespace = false

@@ -1,9 +1,11 @@
 // Turns a partial name from a `render` call into the file it names, and back again.
 //
 // Rails resolves a partial through its lookup context: a name with a slash is relative to the view
-// root, a bare name is relative to the template's own directory and then to the prefixes inherited
-// from the controller. What is reproduced here is that much and no more - `prepend_view_path` and an
-// engine's view path chain are out of reach without booting the app.
+// root, a bare name to the prefixes of whichever controller renders the view - its own directory,
+// then what it inherits, `application` last. Which controller that is cannot be read off a file, so
+// for a bare name this guesses: beside the document, which is right for a view in its controller's
+// own directory, then `application`. `prepend_view_path` and an engine's view path chain are out of
+// reach as well without booting the app.
 
 import type * as nodePath from 'node:path';
 import { type FsDeps, findUpwards, pathApi } from './fsWalk';
@@ -280,15 +282,20 @@ export interface PartialCompletionCandidate {
   /** The path it came from, so the caller can map back to its uri for the detail line. */
   readonly path: string;
   readonly label: string;
-  /** A partial beside the document is written bare, which is how Rails resolves it, so it sorts first. */
+  /** A partial beside the document is the likeliest one to be wanted, so it sorts first. */
   readonly sortText: string;
 }
 
 /**
  * Turns the paths findFiles returned into the labels a render call would accept.
  *
- * Deduplicated by label rather than by path: two directories can offer the same bare name, and the
- * completion widget would show the same string twice with no way to tell them apart.
+ * Always the name relative to the views root, a partial beside the document included. Rails looks a
+ * name without a slash up under the rendering controller's prefixes, not beside the template that
+ * wrote it, so the bare name only works from a view in that controller's own directory - and which
+ * controller renders a view is not something this can know. partialExtraction writes the same form.
+ *
+ * Deduplicated by label rather than by path: a `.haml` and an `.erb` of one partial share theirs, and
+ * the completion widget would show the same string twice with no way to tell them apart.
  */
 export function partialCompletionCandidates(
   paths: readonly string[],
@@ -305,14 +312,12 @@ export function partialCompletionCandidates(
     if (rootRelative === null) {
       continue;
     }
-    const beside = p.dirname(path) === documentDirectory;
-    // rootRelative is always '/'-separated, so its basename is a posix one whatever the platform.
-    const label = beside ? (rootRelative.split('/').pop() as string) : rootRelative;
-    if (seen.has(label)) {
+    if (seen.has(rootRelative)) {
       continue;
     }
-    seen.add(label);
-    candidates.push({ path, label, sortText: (beside ? '0' : '1') + label });
+    seen.add(rootRelative);
+    const beside = p.dirname(path) === documentDirectory;
+    candidates.push({ path, label: rootRelative, sortText: (beside ? '0' : '1') + rootRelative });
   }
   return candidates;
 }

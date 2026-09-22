@@ -12,7 +12,7 @@
 // keystroke and a Haml line can hold an inline data URI.
 
 import type { AttributeSyntax } from '../types';
-import { findLiteralEnd, isNameCharacter, isSpaceCharacter, skipSpaces } from './characters';
+import { findLiteralEnd, isNameCharacter, isOpeningBracket, isSpaceCharacter, skipSpaces } from './characters';
 
 /** What a Haml line may open with and still be a tag. */
 const TAG_STARTS = new Set(['%', '.', '#']);
@@ -42,6 +42,12 @@ export interface AttributePosition {
   /** Characters before the name that the insertion rewrites, i.e. an opening quote. */
   readonly markerLength: number;
   readonly marker: string;
+  /**
+   * Characters after the cursor that the insertion rewrites as well: the closing quote, when it is
+   * the very next character. Typing the opening one makes VS Code write it, and every quoted item
+   * brings its own, so leaving it there turns `'data-tur|'` into `'data-turbo-frame': '''`.
+   */
+  readonly trailingLength: number;
 }
 
 interface ScanResult {
@@ -60,9 +66,18 @@ function scan(linePrefix: string): ScanResult | null {
 
   const stack: Frame[] = [];
   let openLiteralStart: number | null = null;
+  // An html-style `=` whose value has not started. Haml takes `href= "/x"` and `href = "/x"`, so the
+  // whitespace after it separates nothing yet. A flag rather than a look back over the spaces, which
+  // would be quadratic on a line that is mostly spaces.
+  let awaitingValue = false;
+  // Whitespace removal comes after the attribute lists: Haml renders `%a<(href="/x") t` with the
+  // parentheses as text, so no bracket that follows `<` or `>` on the header opens anything.
+  let sawWhitespaceRemoval = false;
 
   for (; index < linePrefix.length; index++) {
     const character = linePrefix[index] as string;
+    const stillAwaitingValue = awaitingValue;
+    awaitingValue = false;
 
     if (character === "'" || character === '"') {
       const end = findLiteralEnd(linePrefix, index);
@@ -83,6 +98,9 @@ function scan(linePrefix: string): ScanResult | null {
     }
 
     const top = stack[stack.length - 1];
+    if (top === undefined && sawWhitespaceRemoval && isOpeningBracket(character)) {
+      return null;
+    }
     if (character === '{') {
       stack.push({ kind: 'hash', ownerKey: top?.lastKey ?? null, sawValueSeparator: false, lastKey: null });
       continue;
@@ -107,6 +125,9 @@ function scan(linePrefix: string): ScanResult | null {
       if (isSpaceCharacter(character) || character === '=' || character === '/') {
         return null;
       }
+      if (character === '<' || character === '>') {
+        sawWhitespaceRemoval = true;
+      }
       continue;
     }
     if (character === ',') {
@@ -114,8 +135,13 @@ function scan(linePrefix: string): ScanResult | null {
       top.lastKey = null;
       continue;
     }
-    // HTML-style attributes are separated by whitespace rather than commas.
+    // HTML-style attributes are separated by whitespace rather than commas - except between an `=`
+    // and the value it is still waiting for.
     if (isSpaceCharacter(character) && top.kind === 'html') {
+      if (stillAwaitingValue) {
+        awaitingValue = true;
+        continue;
+      }
       top.sawValueSeparator = false;
       top.lastKey = null;
       continue;
@@ -132,6 +158,7 @@ function scan(linePrefix: string): ScanResult | null {
     if (character === '=') {
       if (top.kind === 'html') {
         top.sawValueSeparator = true;
+        awaitingValue = true;
         continue;
       }
       // `=>` is the hashrocket separator of a Ruby hash. A lone `=` in a Ruby frame belongs to a
@@ -169,8 +196,20 @@ function syntaxOf(frame: Frame, depth: number): AttributeSyntax | null {
   return depth === 2 && frame.ownerKey === DATA_KEY ? 'rubyDataHash' : null;
 }
 
-/** Null wherever an attribute name cannot go. */
-export function classifyAttributePosition(linePrefix: string): AttributePosition | null {
+/**
+ * Whether the quote at the start of `lineSuffix` closes a key that already has its value: `': 'x'`,
+ * `' => 1`. A lone `::` is a constant path, not a separator.
+ */
+function closesKeyWithValue(lineSuffix: string): boolean {
+  const next = skipSpaces(lineSuffix, 1);
+  if (lineSuffix.startsWith('=>', next)) {
+    return true;
+  }
+  return lineSuffix[next] === ':' && lineSuffix[next + 1] !== ':';
+}
+
+/** Null wherever an attribute name cannot go. `lineSuffix` is the rest of the line after the cursor. */
+export function classifyAttributePosition(linePrefix: string, lineSuffix: string): AttributePosition | null {
   const scanned = scan(linePrefix);
   if (scanned === null || scanned.frame === null || scanned.frame.sawValueSeparator) {
     return null;
@@ -191,17 +230,26 @@ export function classifyAttributePosition(linePrefix: string): AttributePosition
     if (scanned.openLiteralStart !== start - 1) {
       return null;
     }
+    const marker = linePrefix.slice(start - 1, start);
+    const closesHere = lineSuffix.startsWith(marker);
+    // A key that already has its value is being edited, not written: every item would put a second
+    // separator and a second value in front of the first. Offering nothing beats that.
+    if (closesHere && closesKeyWithValue(lineSuffix)) {
+      return null;
+    }
     return {
       syntax,
       identifierLength: linePrefix.length - start,
       markerLength: 1,
-      marker: linePrefix.slice(start - 1, start)
+      marker,
+      trailingLength: closesHere ? 1 : 0
     };
   }
   return {
     syntax,
     identifierLength: linePrefix.length - start,
     markerLength: 0,
-    marker: ''
+    marker: '',
+    trailingLength: 0
   };
 }

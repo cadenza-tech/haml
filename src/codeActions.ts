@@ -67,8 +67,17 @@ export class HamlCodeActionProvider implements vscode.CodeActionProvider {
     return actions;
   }
 
-  /** Pure text edits, so these cost nothing to offer. Which ones is decided in src/pure. */
+  /**
+   * Pure text edits with no process behind them. Which ones is decided in src/pure.
+   *
+   * Not free, though: placing each pair walks the lines around its offense, and codeActionsOnSave
+   * asks for `source.fixAll` over the whole document with every diagnostic in it. VS Code drops what
+   * is not of the kind it asked for, so none are built unless a quick fix could be kept.
+   */
   private disableActions(document: vscode.TextDocument, context: vscode.CodeActionContext): vscode.CodeAction[] {
+    if (context.only !== undefined && !context.only.contains(vscode.CodeActionKind.QuickFix)) {
+      return [];
+    }
     const snapshot = snapshotOf(document);
     const eol = eolOf(document);
 
