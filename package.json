@@ -1,5 +1,5 @@
 {
-  "name": "haml",
+  "name": "vscode-haml",
   "displayName": "Haml",
   "description": "Haml language support with syntax highlighting, linting, and formatting powered by haml-lint",
   "version": "1.0.0",
@@ -117,7 +117,7 @@
     ],
     "configurationDefaults": {
       "[haml]": {
-        "editor.defaultFormatter": "cadenza-tech.haml",
+        "editor.defaultFormatter": "cadenza-tech.vscode-haml",
         "editor.formatOnSave": true,
         "editor.formatOnSaveMode": "file",
         "editor.tabSize": 2,

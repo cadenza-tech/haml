@@ -2829,27 +2829,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"haml@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "haml@workspace:."
-  dependencies:
-    "@biomejs/biome": "npm:^2.5.4"
-    "@types/mocha": "npm:^10.0.10"
-    "@types/node": "npm:~24.13.3"
-    "@types/vscode": "npm:~1.57.0"
-    "@vscode/test-cli": "npm:^0.0.15"
-    "@vscode/test-electron": "npm:^3.0.0"
-    "@vscode/vsce": "npm:^3.9.2"
-    c8: "npm:^12.0.0"
-    esbuild: "npm:^0.28.1"
-    mocha: "npm:^11.7.6"
-    npm-run-all: "npm:^4.1.5"
-    ovsx: "npm:^1.0.2"
-    typescript: "npm:^7.0.2"
-    vscode-tmgrammar-test: "npm:^0.1.3"
-  languageName: unknown
-  linkType: soft
-
 "has-bigints@npm:^1.0.2":
   version: 1.1.0
   resolution: "has-bigints@npm:1.1.0"
@@ -5718,6 +5697,27 @@ __metadata:
   checksum: 10c0/ab40c6f1399e0ad5b5de7f295bb93f79f80a7cda919324d4682e388d937f1e50d6127d8cd6aa46c38bb185f4905e53bdad4cdc36ec5c14ec730e5954422f06ab
   languageName: node
   linkType: hard
+
+"vscode-haml@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "vscode-haml@workspace:."
+  dependencies:
+    "@biomejs/biome": "npm:^2.5.4"
+    "@types/mocha": "npm:^10.0.10"
+    "@types/node": "npm:~24.13.3"
+    "@types/vscode": "npm:~1.57.0"
+    "@vscode/test-cli": "npm:^0.0.15"
+    "@vscode/test-electron": "npm:^3.0.0"
+    "@vscode/vsce": "npm:^3.9.2"
+    c8: "npm:^12.0.0"
+    esbuild: "npm:^0.28.1"
+    mocha: "npm:^11.7.6"
+    npm-run-all: "npm:^4.1.5"
+    ovsx: "npm:^1.0.2"
+    typescript: "npm:^7.0.2"
+    vscode-tmgrammar-test: "npm:^0.1.3"
+  languageName: unknown
+  linkType: soft
 
 "vscode-oniguruma@npm:^1.5.1":
   version: 1.7.0

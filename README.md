@@ -73,7 +73,7 @@ Formatting is on by default for `.haml`, with no configuration required — this
 
 ```jsonc
 "[haml]": {
-  "editor.defaultFormatter": "cadenza-tech.haml",
+  "editor.defaultFormatter": "cadenza-tech.vscode-haml",
   "editor.formatOnSave": true,
   "editor.formatOnSaveMode": "file",
   "editor.tabSize": 2,

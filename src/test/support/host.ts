@@ -6,7 +6,7 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { parseVersion, supportsHamlAutocorrect } from '../../hamlLint/version';
 
-export const EXTENSION_ID = 'cadenza-tech.haml';
+export const EXTENSION_ID = 'cadenza-tech.vscode-haml';
 export const FIXTURE_VIEWS = 'app/views';
 
 /** Absolute path inside src/test/fixtures/rails-like, which .vscode-test.mjs opens as the folder. */
